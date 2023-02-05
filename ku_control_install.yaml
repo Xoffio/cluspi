@@ -57,9 +57,8 @@
 
   - name: Install worker nodes k3s
     shell: >
-      curl -sfL https://get.k3s.io | 
-      K3S_TOKEN='{{ hostvars.token_holder.token }}'  
-      K3S_URL='https://{{ hostvars.token_holder.control_ip }}:6443'
-      K3S_NODE_NAME='"{{ ansible_hostname }}"'
-      sh -
-    when: inventory_hostname in groups['workers'] 
+      curl -sfL https://get.k3s.io | sh -s - agent
+      --token {{ hostvars.token_holder.token }}
+      --server 'https://{{ hostvars.token_holder.control_ip }}:6443'
+      --node-name '{{ ansible_hostname }}'
+    when: inventory_hostname in groups['workers']
