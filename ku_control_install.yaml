@@ -1,0 +1,65 @@
+- hosts: all
+  vars_prompt:
+    - name: db_user
+      prompt: db_user
+      private: false
+    - name: db_pass
+      prompt: db_pass
+      private: true
+    - name: db_ip
+      prompt: db ip and port IP:PORT
+      private: false
+    - name: db_table
+      prompt: db_table
+      private: false
+
+  tasks:
+  - name: Install the main control node
+    shell: >
+      curl -sfL https://get.k3s.io | sh -s - server
+      --datastore-endpoint='mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_ip }})/{{ db_table }}'
+      --disable servicelb
+      --write-kubeconfig-mode 644
+    register: ku_main_control_installation
+    when: inventory_hostname in groups['main_control']
+
+  - name: Uninstall k3s when failed
+    command: /usr/local/bin/k3s-uninstall.sh
+    when: 
+      - hostvars[groups['main_control'][0]].ku_main_control_installation.failed 
+      - inventory_hostname in groups['main_control']
+
+  - name: Installation Failed
+    fail:
+      msg: Installation Failed
+    when: hostvars[groups['main_control'][0]].ku_main_control_installation.failed
+
+  - name: Get token from main control
+    become: yes
+    command: cat /var/lib/rancher/k3s/server/node-token
+    register: ku_token
+    when: inventory_hostname in groups['main_control']
+
+  - name: Create the token holder
+    add_host:
+      name: token_holder
+      token: "{{ ku_token.stdout }}"
+      control_ip: "{{ hostvars[groups['main_control'][0]].ansible_default_ipv4.address }}"
+
+  - name: Install the rest of control nodes
+    shell: >
+      curl -sfL https://get.k3s.io | sh -s - server 
+      --token {{ hostvars.token_holder.token }}
+      --datastore-endpoint='mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_ip }})/{{ db_table }}'
+      --disable servicelb \
+      --write-kubeconfig-mode 644
+    when: inventory_hostname in groups['control']
+
+  - name: Install worker nodes k3s
+    shell: >
+      curl -sfL https://get.k3s.io | 
+      K3S_TOKEN='{{ hostvars.token_holder.token }}'  
+      K3S_URL='https://{{ hostvars.token_holder.control_ip }}:6443'
+      K3S_NODE_NAME='"{{ ansible_hostname }}"'
+      sh -
+    when: inventory_hostname in groups['workers'] 
