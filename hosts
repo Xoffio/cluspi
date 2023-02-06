@@ -6,3 +6,5 @@ mn02.opt2       ansible_connection=ssh          ansible_python_interpreter=auto
 
 [workers]
 sn01.opt2       ansible_connection=ssh          ansible_python_interpreter=auto
+sn02.opt2       ansible_connection=ssh          ansible_python_interpreter=auto
+sn03.opt2       ansible_connection=ssh          ansible_python_interpreter=auto
