@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+patches:
+  - target:
+      version: v1
+      group: apps
+      kind: DaemonSet
+      namespace: metallb-system
+      name: speaker
+    patch: |-
+      - op: add
+        path: /spec/template/spec/tolerations/-
+        value: {"key":"CriticalAddonsOnly","operator":"Exists"}

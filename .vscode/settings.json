@@ -1,7 +1,10 @@
 {
     "cSpell.words": [
+        "cluspi",
         "hostvars",
         "kubeconfig",
+        "kustomization",
+        "metallb",
         "servicelb"
     ]
 }

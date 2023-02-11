@@ -62,3 +62,29 @@
       --server 'https://{{ hostvars.token_holder.control_ip }}:6443'
       --node-name '{{ ansible_hostname }}'
     when: inventory_hostname in groups['workers']
+
+  # --- Install MetalLB ---
+  - name: Create Cluspi build directory
+    file:
+      path: /tmp/cluspi/build
+      state: directory
+
+  - name: Copy kustomization.yaml file
+    ansible.builtin.copy:
+        src: conf/kustomization.yaml
+        dest: /tmp/cluspi/build/
+
+  - name: Install MetalLB
+    shell: >
+      kubectl apply -k /tmp/cluspi/build
+    when: inventory_hostname in groups['main_control']
+
+  - name: Copy the MetalLB conf file
+    ansible.builtin.copy:
+        src: conf/metallb-conf.yaml
+        dest: /tmp/cluspi/
+
+  - name: Apply the MetalLB configurations
+    shell: >
+      kubectl apply -f /tmp/cluspi/metallb-conf.yaml
+    when: inventory_hostname in groups['main_control']
