@@ -1,4 +1,5 @@
 - hosts: all
+
   vars_prompt:
     - name: db_user
       prompt: db_user
@@ -83,8 +84,13 @@
     ansible.builtin.copy:
         src: conf/metallb-conf.yaml
         dest: /tmp/cluspi/
+        mode: '0664'
+
+  - name: Pause for 30 sec to apply MetalLB configurations
+    ansible.builtin.pause:
+      seconds: 30
 
   - name: Apply the MetalLB configurations
     shell: >
-      kubectl apply -f /tmp/cluspi/metallb-conf.yaml
-    when: inventory_hostname in groups['main_control']
+      kubectl apply -f /tmp/cluspi/metallb-conf.yaml >> /tmp/cluspi/metallb-conf.log
+    when: inventory_hostname in groups['main_control'] 
