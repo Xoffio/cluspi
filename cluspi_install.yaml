@@ -17,7 +17,7 @@
   tasks:
   - name: Install the main control node
     shell: >
-      curl -sfL https://get.k3s.io | sh -s - server
+      curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=v1.24 sh -s - server
       --datastore-endpoint='mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_ip }})/{{ db_table }}'
       --disable servicelb
       --write-kubeconfig-mode 644
@@ -49,7 +49,7 @@
 
   - name: Install the rest of control nodes
     shell: >
-      curl -sfL https://get.k3s.io | sh -s - server 
+      curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=v1.24 sh -s - server 
       --token {{ hostvars.token_holder.token }}
       --datastore-endpoint='mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_ip }})/{{ db_table }}'
       --disable servicelb \
@@ -58,7 +58,7 @@
 
   - name: Install worker nodes k3s
     shell: >
-      curl -sfL https://get.k3s.io | sh -s - agent
+      curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=v1.24 sh -s - agent
       --token {{ hostvars.token_holder.token }}
       --server 'https://{{ hostvars.token_holder.control_ip }}:6443'
       --node-name '{{ ansible_hostname }}'
@@ -86,9 +86,9 @@
         dest: /tmp/cluspi/
         mode: '0664'
 
-  - name: Pause for 30 sec to apply MetalLB configurations
+  - name: Pause for 60 sec to apply MetalLB configurations
     ansible.builtin.pause:
-      seconds: 30
+      seconds: 60
 
   - name: Apply the MetalLB configurations
     shell: >
