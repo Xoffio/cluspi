@@ -1,0 +1,15 @@
+- name: Include uninstall tasks if requested
+  ansible.builtin.include_tasks: uninstall.yml
+  when: uninstall_k3s | default(false)
+
+- name: Include etcd install tasks
+  ansible.builtin.include_tasks: install_etcd.yml
+  when:
+    - not uninstall_k3s | default(false)
+    - k3s_datastore == "etcd"
+
+- name: Include external DB install tasks
+  ansible.builtin.include_tasks: install_db.yml
+  when:
+    - not uninstall_k3s | default(false)
+    - k3s_datastore != "etcd"

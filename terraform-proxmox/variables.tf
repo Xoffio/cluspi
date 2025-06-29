@@ -101,6 +101,43 @@ variable "worker_node_ips" {
   type        = list(string)
 }
 
+
+# |-----------------------------------------------------|
+# |        CONTROL NODE LOAD BALANCER VARIABLES         |
+# |-----------------------------------------------------|
+variable "control_node_lb_name" {
+  description = "Name assigned to the load balancer serving the control plane nodes"
+  type        = string
+}
+
+variable "control_node_lb_cores" {
+  description = "Number of cores for the CPU (Control node's LB)"
+  type        = number
+  default     = 1
+}
+
+variable "control_node_lb_disk_size" {
+  description = "Size of the disk in GB (Control node's LB)"
+  type        = number
+  default     = 12
+}
+
+variable "control_node_lb_ram_size" {
+  description = "Size of RAM in MB (Control node's LB)"
+  type        = number
+  default     = 512
+}
+
+variable "control_node_lb_ips" {
+  description = "List of static IP addresses to assign to each load balancer routing traffic to control nodes"
+  type        = list(string)
+}
+
+variable "control_node_lb_prox_target_node" {
+  description = "List of Proxmox node where the control node will be created"
+  type        = list(string)
+}
+
 # |-----------------------------------------------------|
 # |                  GENERAL VARIABLES                  |
 # |-----------------------------------------------------|

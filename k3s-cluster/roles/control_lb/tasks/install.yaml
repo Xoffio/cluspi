@@ -1,0 +1,30 @@
+- name: Ensure apt cache is updated
+  ansible.builtin.apt:
+    update_cache: yes
+  become: true
+
+- name: Install HAProxy and Keepalived
+  ansible.builtin.apt:
+    name:
+      - haproxy
+      - keepalived
+    state: present
+  become: true
+
+- name: Deploy HAProxy config
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart HAProxy
+
+- name: Deploy Keepalived config
+  ansible.builtin.template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Keepalived

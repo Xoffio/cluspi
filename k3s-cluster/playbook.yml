@@ -1,3 +1,9 @@
+- name: Setup Load Balancer for Control Nodes
+  hosts: control_load_balancer
+  become: true
+  roles:
+    - role: control_lb
+
 - name: Setup K3s Main Control Node
   hosts: main_control
   become: true
@@ -9,9 +15,9 @@
   become: true
   roles:
     - role: control_node
-#
-# - name: Setup K3s Worker Nodes
-#   hosts: worker_nodes
-#   become: true
-#   roles:
-#     - role: worker_node
+
+- name: Setup K3s Worker Nodes
+  hosts: worker_nodes
+  become: true
+  roles:
+    - role: worker_node

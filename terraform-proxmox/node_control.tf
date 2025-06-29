@@ -1,10 +1,10 @@
 # Define the Proxmox VM resource
 resource "proxmox_vm_qemu" "k3s_control_nodes" {
   count       = var.num_control_nodes
-  name        = "${var.control_node_name}-${format("%02d", count.index + 1)}" # Name of the new VM
-  target_node = var.control_node_prox_target_node[count.index]                # Proxmox node where the VM will be created
-  clone       = var.template_name                                             # Base template to clone from
-  full_clone  = true                                                          # Create a full independent clone
+  name        = "${var.control_node_name}${format("%02d", count.index + 1)}" # Name of the new VM
+  target_node = var.control_node_prox_target_node[count.index]               # Proxmox node where the VM will be created
+  clone       = var.template_name                                            # Base template to clone from
+  full_clone  = true                                                         # Create a full independent clone
   scsihw      = "virtio-scsi-single"
   os_type     = "cloud-init" # Enable Cloud-Init support
 
