@@ -1,0 +1,17 @@
+- name: Setup K3s Main Control Node
+  hosts: main_control
+  become: true
+  roles:
+    - role: main_control
+
+- name: Setup K3s Control Nodes
+  hosts: control_nodes
+  become: true
+  roles:
+    - role: control_node
+#
+# - name: Setup K3s Worker Nodes
+#   hosts: worker_nodes
+#   become: true
+#   roles:
+#     - role: worker_node

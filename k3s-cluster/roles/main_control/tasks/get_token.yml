@@ -1,0 +1,8 @@
+- name: Get K3s token
+  slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token_raw
+
+- name: Set K3s token fact
+  set_fact:
+    k3s_token: "{{ k3s_token_raw.content | b64decode | trim }}"
