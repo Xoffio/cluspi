@@ -21,3 +21,9 @@
   become: true
   roles:
     - role: worker_node
+
+- name: Setup MetalLB load balancer
+  hosts: main_control
+  become: true
+  roles:
+    - role: metallb

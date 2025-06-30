@@ -1,0 +1,20 @@
+- name: Delete MetalLB configuration
+  ansible.builtin.shell: |
+    kubectl delete -k /tmp/metallb-kustomization/metallb-conf.yaml
+  # changed_when: false
+  register: delete_metallb
+  changed_when: "'deleted' in delete_metallb.stdout"
+  failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
+
+- name: Delete MetalLB manifest
+  ansible.builtin.shell: |
+    kubectl delete -k /tmp/metallb-kustomization
+  # changed_when: false
+  register: delete_metallb
+  changed_when: "'deleted' in delete_metallb.stdout"
+  failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
+
+- name: Delete metallb-kustomization directory
+  ansible.builtin.file:
+    path: /tmp/metallb-kustomization
+    state: absent

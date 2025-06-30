@@ -1,0 +1,7 @@
+- name: Include uninstall task if requested
+  ansible.builtin.include_tasks: uninstall.yaml
+  when: uninstall_k3s | default(false)
+
+- name: Include installation task
+  ansible.builtin.include_tasks: install.yaml
+  when: not uninstall_k3s | default(false)

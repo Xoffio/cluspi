@@ -1,0 +1,35 @@
+- name: Create metallb-kustomization directory
+  ansible.builtin.file:
+    path: /tmp/metallb-kustomization
+    state: directory
+    mode: '0755'
+
+- name: Copy kustomization.yaml
+  ansible.builtin.template:
+    src: kustomization.yaml.j2
+    dest: /tmp/metallb-kustomization/kustomization.yaml
+    mode: '0644'
+
+- name: Copy metallb-conf.yaml
+  ansible.builtin.template:
+    src: metallb-conf.yaml.j2
+    dest: /tmp/metallb-kustomization/metallb-conf.yaml
+    mode: '0644'
+
+- name: Apply MetalLB manifest
+  ansible.builtin.shell: |
+    kubectl apply -k /tmp/metallb-kustomization
+  register: apply_result
+  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
+  # changed_when: false
+
+- name: Pause for 60 sec to apply MetalLB configurations
+  ansible.builtin.pause:
+    seconds: 60
+
+- name: Apply MetalLB configuration
+  ansible.builtin.shell: |
+    kubectl apply -f /tmp/metallb-kustomization/metallb-conf.yaml
+  register: apply_result
+  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
+  # changed_when: false
