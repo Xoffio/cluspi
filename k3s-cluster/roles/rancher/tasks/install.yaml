@@ -1,0 +1,74 @@
+- name: Check if Helm is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_binary
+
+- name: Download Helm tarball
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-v{{ rancher_ver }}-linux-amd64.tar.gz"
+    dest: /tmp/helm.tar.gz
+  when: not helm_binary.stat.exists
+
+- name: Extract Helm tarball
+  ansible.builtin.unarchive:
+    src: /tmp/helm-v{{ rancher_ver }}-linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: true
+  when: not helm_binary.stat.exists
+
+- name: Install Helm binary
+  ansible.builtin.copy:
+    src: /tmp/linux-amd64/helm
+    dest: /usr/local/bin/helm
+    mode: '0755'
+    owner: root
+    group: root
+    remote_src: true
+  become: true
+  when: not helm_binary.stat.exists
+
+# ---- Install Cert Manager ----
+- name: Install Cert Manager CRDs
+  ansible.builtin.shell: |
+    kubectl apply --validate=false -f https://github.com/cert-manager/cert-manager/releases/download/v{{ cert_manager_ver }}/cert-manager.crds.yaml
+  register: apply_result
+  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
+
+- name: Add Jetstack Helm repository
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: https://charts.jetstack.io
+
+- name: Install Cert Manager
+  kubernetes.core.helm:
+    name: cert-manager
+    chart_ref: jetstack/cert-manager
+    chart_version: "v{{ cert_manager_ver }}"
+    release_namespace: cert-manager
+    state: present
+    create_namespace: true
+    update_repo_cache: true
+    wait: true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+# ---- Install Rancher ----
+- name: Add Rancher Helm repository
+  kubernetes.core.helm_repository:
+    name: rancher-stable
+    repo_url: https://releases.rancher.com/server-charts/stable
+
+- name: Install Rancher
+  kubernetes.core.helm:
+    name: rancher
+    chart_ref: rancher-stable/rancher
+    release_namespace: cattle-system
+    state: present
+    create_namespace: true
+    update_repo_cache: true
+    wait: true
+    values:
+      hostname: "{{ rancher_hostname }}"
+      replicas: "{{ rancher_n_replicas }}"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml

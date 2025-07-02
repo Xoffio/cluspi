@@ -27,3 +27,9 @@
   become: true
   roles:
     - role: metallb
+
+- name: Install Rancher
+  hosts: main_control
+  become: true
+  roles:
+    - role: rancher
