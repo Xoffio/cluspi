@@ -72,3 +72,13 @@
       replicas: "{{ rancher_n_replicas }}"
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Get Rancher's bootstrap secret
+  ansible.builtin.shell: >
+    kubectl get secret --namespace cattle-system bootstrap-secret -o go-template='{{"{{"}}.data.bootstrapPassword | base64decode {{"}}"}}'
+  register: rancher_bootstrap_secret
+  changed_when: false
+
+- name: Output Rancher bootstrap token
+  ansible.builtin.debug:
+    msg: "Rancher bootstrap token: {{ rancher_bootstrap_secret.stdout }}"
