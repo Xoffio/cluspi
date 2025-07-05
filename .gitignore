@@ -1,7 +1,10 @@
 /dev
 
+.env
+
 # Terraform
 .terraform
 *.tfstate
 *.tfstate.backup
 *.lock.hcl
+*.tfvars

@@ -82,3 +82,27 @@
 - name: Output Rancher bootstrap token
   ansible.builtin.debug:
     msg: "Rancher bootstrap token: {{ rancher_bootstrap_secret.stdout }}"
+
+- name: Copy the ingress template
+  ansible.builtin.template:
+    src: rancher-ui-ingress.yaml.j2
+    dest: /tmp/rancher-ui-ingress.yaml
+    mode: '0644'
+
+- name: Copy the ClusterIP yaml file
+  ansible.builtin.copy:
+    src: rancher-cip.yaml
+    dest: /tmp/rancher-cip.yaml
+    mode: '0644'
+
+- name: Apply ClusterIP for Rancher
+  ansible.builtin.shell: |
+    kubectl apply -f /tmp/rancher-cip.yaml
+  register: apply_result
+  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
+
+- name: Apply Ingress for Rancher
+  ansible.builtin.shell: |
+    kubectl apply -f /tmp/rancher-ui-ingress.yaml
+  register: apply_result
+  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"

@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rancher-ui-ingress
+  namespace: cattle-system
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: {{ rancher_fqdn }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rancher-cip
+                port:
+                  number: 80
