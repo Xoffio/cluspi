@@ -45,6 +45,9 @@ terraform_var_file="./terraform-proxmox/terraform.tfvars"
 ansible_var_file="./k3s-cluster/group_vars/all.yml"
 ansible_host_file="./k3s-cluster/inventory/hosts.yml"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 ##  ______________________________________
 ## |          Terraform Variables        |
 ## |_____________________________________|
@@ -83,7 +86,7 @@ echo "pm_api_token_secret = \"${PM_API_TOKEN_SECRET}\"" >>"$terraform_var_file"
 echo "" >>"$terraform_var_file"
 echo "control_node_name             = \"${CONTROL_NODE_NAME}\"" >>"$terraform_var_file"
 echo "control_node_cores            = ${CONTROL_NODE_CORES}" >>"$terraform_var_file"
-echo "control_node_disk_size        = ${CONTROL_NODE_DISK_SIZE}" >>"$terraform_var_file"
+# echo "control_node_disk_size        = ${CONTROL_NODE_DISK_SIZE}" >>"$terraform_var_file"
 echo "control_node_ram_size         = ${CONTROL_NODE_RAM_SIZE}" >>"$terraform_var_file"
 
 format_ips_for_tfvars "control_node_ips" "$CONTROL_NODE_IPS" "14" >>"$terraform_var_file"
@@ -93,7 +96,7 @@ IFS=',' read -ra CONTROL_NODE_IPS <<<"$CONTROL_NODE_IPS"
 echo "" >>"$terraform_var_file"
 echo "worker_node_name             = \"${WORKER_NODE_NAME}\"" >>"$terraform_var_file"
 echo "worker_node_cores            = ${WORKER_NODE_CORES}" >>"$terraform_var_file"
-echo "worker_node_disk_size        = ${WORKER_NODE_DISK_SIZE}" >>"$terraform_var_file"
+# echo "worker_node_disk_size        = ${WORKER_NODE_DISK_SIZE}" >>"$terraform_var_file"
 echo "worker_node_ram_size         = ${WORKER_NODE_RAM_SIZE}" >>"$terraform_var_file"
 format_ips_for_tfvars "worker_node_ips" "$WORKER_NODE_IPS" "14" >>"$terraform_var_file"
 format_ips_for_tfvars "worker_node_prox_target_node" "$WORKER_NODE_PROX_TARGET_NODE" "1" >>"$terraform_var_file"
@@ -174,3 +177,22 @@ echo "" >>"${ansible_host_file}"
 echo "[control_load_balancer]" >>"${ansible_host_file}"
 echo "lb-1 ansible_host=${CONTROL_NODE_LB_IPS[0]%/*} ansible_user=${VM_USER} keepalived_state=MASTER keepalived_priority=200 ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
 echo "lb-2 ansible_host=${CONTROL_NODE_LB_IPS[1]%/*} ansible_user=${VM_USER} keepalived_state=BACKUP keepalived_priority=100 ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
+
+##  ______________________________________
+## |              DEPLOYMENT             |
+## |_____________________________________|
+
+if [ ! -d "./dev" ]; then
+	python3 -m venv dev || echo "Failed creating virtual environment" && exit 1
+fi
+
+cd ./terraform-proxmox/
+terraform init --upgrade &&
+	terraform plan &&
+	terraform apply -parallelism 1 || (echo "Terraform Failed" && exit 1)
+
+cd "$SCRIPT_DIR"
+source dev/bin/activate
+pip install -r requirements.txt
+
+ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml

@@ -57,4 +57,8 @@ resource "proxmox_vm_qemu" "k3s_control_node_lb" {
   # Inject public SSH key for the ciuser
   # sshkeys = var.ssh_key
   sshkeys = data.http.github_keys.response_body
+
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
 }

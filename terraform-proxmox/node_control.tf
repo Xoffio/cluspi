@@ -1,5 +1,6 @@
 # Define the Proxmox VM resource
 resource "proxmox_vm_qemu" "k3s_control_nodes" {
+  depends_on  = [proxmox_vm_qemu.k3s_control_node_lb]
   count       = var.num_control_nodes
   name        = "${var.control_node_name}${format("%02d", count.index + 1)}" # Name of the new VM
   target_node = var.control_node_prox_target_node[count.index]               # Proxmox node where the VM will be created
@@ -57,4 +58,8 @@ resource "proxmox_vm_qemu" "k3s_control_nodes" {
   # Inject public SSH key for the ciuser
   # sshkeys = var.ssh_key
   sshkeys = data.http.github_keys.response_body
+
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
 }
