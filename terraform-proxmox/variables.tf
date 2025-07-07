@@ -32,6 +32,7 @@ variable "pm_api_token_secret" {
 # |              CONTROL NODE VARIABLES                 |
 # |-----------------------------------------------------|
 variable "control_node_name" {
+  default     = "control"
   description = "Name for the control nodes"
   type        = string
 }
@@ -68,6 +69,7 @@ variable "control_node_prox_target_node" {
 # |               WORKER NODE VARIABLES                 |
 # |-----------------------------------------------------|
 variable "worker_node_name" {
+  default     = "worker"
   description = "Name of the VM"
   type        = string
 }
@@ -106,6 +108,7 @@ variable "worker_node_ips" {
 # |        CONTROL NODE LOAD BALANCER VARIABLES         |
 # |-----------------------------------------------------|
 variable "control_node_lb_name" {
+  default     = "control-lb"
   description = "Name assigned to the load balancer serving the control plane nodes"
   type        = string
 }

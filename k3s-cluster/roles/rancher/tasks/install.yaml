@@ -6,7 +6,7 @@
 - name: Download Helm tarball
   ansible.builtin.get_url:
     url: "https://get.helm.sh/helm-v{{ rancher_ver }}-linux-amd64.tar.gz"
-    dest: /tmp/helm.tar.gz
+    dest: "/tmp/helm-v{{ rancher_ver }}-linux-amd64.tar.gz"
   when: not helm_binary.stat.exists
 
 - name: Extract Helm tarball
@@ -68,7 +68,7 @@
     update_repo_cache: true
     wait: true
     values:
-      hostname: "{{ rancher_hostname }}"
+      hostname: "{{ rancher_fqdn }}"
       replicas: "{{ rancher_n_replicas }}"
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
