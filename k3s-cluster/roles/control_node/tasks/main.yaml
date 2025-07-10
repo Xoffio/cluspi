@@ -3,7 +3,7 @@
   when: uninstall_k3s | default(false)
 
 - name: Include etcd install tasks
-  ansible.builtin.include_tasks: install_etcd.yml
+  ansible.builtin.include_tasks: install_with_mysql.yml
   when:
     - not uninstall_k3s | default(false)
     - k3s_datastore == "etcd"

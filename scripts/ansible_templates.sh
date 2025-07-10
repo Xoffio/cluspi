@@ -30,6 +30,12 @@ create_ansible_vars_file() {
 	echo "rancher_n_replicas: \"$RANCHER_N_REPLICAS\"" >>"$ansible_var_file"
 	echo "rancher_fqdn: \"$RANCHER_FQDN\"" >>"$ansible_var_file"
 	echo "" >>"$ansible_var_file"
+
+	echo "db_user: \"$DB_USER\"" >>"$ansible_var_file"
+	echo "db_pass: \"$DB_PASS\"" >>"$ansible_var_file"
+	echo "db_host: \"$DB_HOST\"" >>"$ansible_var_file"
+	echo "db_port: \"$DB_PORT\"" >>"$ansible_var_file"
+	echo "db_name: \"$DB_NAME\"" >>"$ansible_var_file"
 }
 
 ##  ______________________________________

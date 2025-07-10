@@ -79,7 +79,6 @@ create_terraform_vars_file
 ## |_____________________________________|
 create_ansible_vars_file
 create_ansible_hosts_file
-check_ssh_connection
 
 ##  ______________________________________
 ## |              DEPLOYMENT             |
@@ -89,6 +88,7 @@ if [ "$IS_DESTROY" -eq 0 ]; then
 	create_python_venv
 	deploy_vms
 	activate_python_venv
+	check_ssh_connection
 	ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml
 else
 	destroy_vms
