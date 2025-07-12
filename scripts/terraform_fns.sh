@@ -34,4 +34,6 @@ check_ssh_connection() {
 		done
 		echo "      SSH is up in $ip"
 	done
+
+	# TODO: Load balancers
 }

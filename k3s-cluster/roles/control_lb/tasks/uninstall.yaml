@@ -1,18 +1,32 @@
-- name: Stop HAProxy
+- name: Stop HAProxy (if installed)
   ansible.builtin.service:
     name: haproxy
     state: stopped
     enabled: false
   become: true
+  ignore_errors: true
 
-- name: Stop Keepalived
+- name: Stop Keepalived (if installed)
   ansible.builtin.service:
     name: keepalived
     state: stopped
     enabled: false
   become: true
+  ignore_errors: true
 
-- name: Uninstall HAProxy and Keepalived
+- name: Remove HAProxy config (if it exists)
+  ansible.builtin.file:
+    path: /etc/haproxy/haproxy.cfg
+    state: absent
+  become: true
+
+- name: Remove Keepalived config (if it exists)
+  ansible.builtin.file:
+    path: /etc/keepalived/keepalived.conf
+    state: absent
+  become: true
+
+- name: Uninstall HAProxy and Keepalived (if present)
   ansible.builtin.apt:
     name:
       - haproxy
@@ -20,15 +34,5 @@
     state: absent
     purge: true
   become: true
-
-- name: Remove HAProxy config
-  ansible.builtin.file:
-    path: /etc/haproxy/haproxy.cfg
-    state: absent
-  become: true
-
-- name: Remove Keepalived config
-  ansible.builtin.file:
-    path: /etc/keepalived/keepalived.conf
-    state: absent
-  become: true
+  register: remove_pkgs
+  failed_when: remove_pkgs.failed and 'is not installed' not in remove_pkgs.msg  # optional: suppresses soft errors

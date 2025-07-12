@@ -1,3 +1,4 @@
+# ---- Install Helm ----
 - name: Check if Helm is already installed
   ansible.builtin.stat:
     path: /usr/local/bin/helm

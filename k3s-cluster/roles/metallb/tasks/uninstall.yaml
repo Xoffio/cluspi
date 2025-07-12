@@ -1,18 +1,23 @@
+- name: Check if kubectl is available
+  ansible.builtin.command: which kubectl
+  register: kubectl_check
+  ignore_errors: true
+
 - name: Delete MetalLB configuration
   ansible.builtin.shell: |
     kubectl delete -k /tmp/metallb-kustomization/metallb-conf.yaml
-  # changed_when: false
   register: delete_metallb
   changed_when: "'deleted' in delete_metallb.stdout"
   failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
+  when: kubectl_check.rc == 0
 
 - name: Delete MetalLB manifest
   ansible.builtin.shell: |
     kubectl delete -k /tmp/metallb-kustomization
-  # changed_when: false
   register: delete_metallb
   changed_when: "'deleted' in delete_metallb.stdout"
   failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
+  when: kubectl_check.rc == 0
 
 - name: Delete metallb-kustomization directory
   ansible.builtin.file:

@@ -4,7 +4,7 @@
     dest: /tmp/k3s-install.sh
     mode: '0755'
 
-- name: Install the main control node (ETCD)
+- name: Install the main control node (EDB)
   ansible.builtin.shell: |
     /tmp/k3s-install.sh
   args:
