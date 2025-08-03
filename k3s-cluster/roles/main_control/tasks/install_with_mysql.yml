@@ -7,10 +7,10 @@
 - name: Install the main control node (EDB)
   ansible.builtin.shell: |
     /tmp/k3s-install.sh
-  args:
-    creates: /etc/systemd/system/k3s.service
+  # args:
+  #   creates: /etc/systemd/system/k3s.service
   environment:
     INSTALL_K3S_CHANNEL: "v{{ k3s_ver }}"
-    INSTALL_K3S_EXEC: "server --disable servicelb --write-kubeconfig-mode 644 --tls-san {{ control_lb_virtual_ip }}"
+    INSTALL_K3S_EXEC: "server --disable servicelb --tls-san {{ control_lb_virtual_ip }} --datastore-endpoint mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"
     K3S_KUBECONFIG_MODE: "644"
-    K3S_DATASTORE_ENDPOINT: "mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"
+    # K3S_DATASTORE_ENDPOINT: "mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"

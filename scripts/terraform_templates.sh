@@ -11,9 +11,45 @@ format_ips_for_tfvars() {
   printf "%s%*s%s\n" "$var_name" "$padding" "" "= $formatted_ips"
 }
 
+format_control_node_names() {
+  local var_name="$1"
+  local padding="$2"
+
+  formatted_names=()
+  for i in "${!CONTROL_NODE_TYPES[@]}"; do
+    if [[ "${CONTROL_NODE_TYPES[$i]}" == "PROX" ]]; then
+      formatted_names+=("${CONTROL_NODE_NAMES[$i]}")
+    fi
+  done
+
+  # Export to Terraform format
+  PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  PROX_NODE_NAMES_STR="[${PROX_NODE_NAMES_STR%,}]"
+
+  printf "%s%*s%s\n" "$var_name" "$padding" "" "= $PROX_NODE_NAMES_STR"
+}
+
+format_worker_node_names() {
+  local var_name="$1"
+  local padding="$2"
+
+  formatted_names=()
+  for i in "${!WORKER_NODE_TYPES[@]}"; do
+    if [[ "${WORKER_NODE_TYPES[$i]}" == "PROX" ]]; then
+      formatted_names+=("${WORKER_NODE_NAMES[$i]}")
+    fi
+  done
+
+  # Export to Terraform format
+  PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  PROX_NODE_NAMES_STR="[${PROX_NODE_NAMES_STR%,}]"
+
+  printf "%s%*s%s\n" "$var_name" "$padding" "" "= $PROX_NODE_NAMES_STR"
+}
+
 create_terraform_vars_file() {
-  : "${NUM_CONTROL_NODES:?NUM_CONTROL_NODES is required}"
-  : "${NUM_WORKER_NODES:?NUM_WORKER_NODES is required}"
+  : "${CONTROL_NODE_COUNT:?CONTROL_NODE_COUNT is required}"
+  : "${WORKER_NODE_COUNT:?WORKER_NODE_COUNT is required}"
   : "${PM_API_URL:?PM_API_URL is required}"
   : "${PM_API_TOKEN_ID:?PM_API_TOKEN_ID is required}"
   : "${PM_API_TOKEN_SECRET:?PM_API_TOKEN_SECRET is required}"
@@ -34,14 +70,15 @@ create_terraform_vars_file() {
   : "${VM_USER:?VM_USER is required}"
   : "${GITHUB_USER:?GITHUB_USER is required}" # TODO: What if the user doesn't have their keys in Github. Fix this
 
-  echo "num_control_nodes   = ${NUM_CONTROL_NODES}" >"$terraform_var_file"
-  echo "num_worker_nodes    = ${NUM_WORKER_NODES}" >>"$terraform_var_file"
+  echo "control_node_count  = ${CONTROL_NODE_COUNT_TF}" >"$terraform_var_file"
+  echo "worker_node_count   = ${WORKER_NODE_COUNT_TF}" >>"$terraform_var_file"
   echo "pm_api_url          = \"${PM_API_URL}\"" >>"$terraform_var_file"
   echo "pm_api_token_id     = \"${PM_API_TOKEN_ID}\"" >>"$terraform_var_file"
   echo "pm_api_token_secret = \"${PM_API_TOKEN_SECRET}\"" >>"$terraform_var_file"
   echo "" >>"$terraform_var_file"
 
-  [[ -n "${CONTROL_NODE_NAME:-}" ]] && echo "control_node_name             = \"${CONTROL_NODE_NAME}\"" >>"$terraform_var_file"
+  # [[ -n "${CONTROL_NODE_NAME:-}" ]] && echo "control_node_name             = \"${CONTROL_NODE_NAME}\"" >>"$terraform_var_file"
+  format_control_node_names "control_node_names" "12" >>"$terraform_var_file"
   [[ -n "${CONTROL_NODE_CORES:-}" ]] && echo "control_node_cores            = ${CONTROL_NODE_CORES}" >>"$terraform_var_file"
   [[ -n "${CONTROL_NODE_DISK_SIZE:-}" ]] && echo "control_node_disk_size        = ${CONTROL_NODE_DISK_SIZE}" >>"$terraform_var_file"
   [[ -n "${CONTROL_NODE_RAM_SIZE:-}" ]] && echo "control_node_ram_size         = ${CONTROL_NODE_RAM_SIZE}" >>"$terraform_var_file"
@@ -51,7 +88,8 @@ create_terraform_vars_file() {
   IFS=',' read -ra CONTROL_NODE_IPS <<<"$CONTROL_NODE_IPS"
   echo "" >>"$terraform_var_file"
 
-  [[ -n "${WORKER_NODE_NAME:-}" ]] && echo "worker_node_name             = \"${WORKER_NODE_NAME}\"" >>"$terraform_var_file"
+  # [[ -n "${WORKER_NODE_NAME:-}" ]] && echo "worker_node_name             = \"${WORKER_NODE_NAME}\"" >>"$terraform_var_file"
+  format_worker_node_names "worker_node_names" "12" >>"$terraform_var_file"
   [[ -n "${WORKER_NODE_CORES:-}" ]] && echo "worker_node_cores            = ${WORKER_NODE_CORES}" >>"$terraform_var_file"
   [[ -n "${WORKER_NODE_DISK_SIZE:-}" ]] && echo "worker_node_disk_size        = ${WORKER_NODE_DISK_SIZE}" >>"$terraform_var_file"
   [[ -n "${WORKER_NODE_RAM_SIZE:-}" ]] && echo "worker_node_ram_size         = ${WORKER_NODE_RAM_SIZE}" >>"$terraform_var_file"

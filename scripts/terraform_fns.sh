@@ -1,8 +1,16 @@
 deploy_vms() {
 	cd ./terraform-proxmox/ || exit 1
+
+	terraform validate
+	if [ $? -ne 0 ]; then
+		echo "Terraform validation failed."
+		exit 1
+	fi
+
 	terraform init --upgrade &&
 		terraform plan &&
-		terraform apply -auto-approve -parallelism 1 || (echo "Terraform Failed" && exit 1)
+		# terraform apply -auto-approve -parallelism 1 || (echo "Terraform Failed" && exit 1)
+		terraform apply -parallelism 1 || (echo "Terraform Failed" && exit 1)
 }
 
 destroy_vms() {
@@ -47,4 +55,18 @@ check_ssh_connection() {
 		done
 		echo "      SSH is up in $ip"
 	done
+}
+
+get_n_prox_nodes() {
+	local -n arr_ref=$1 # Create a nameref to the passed array name
+	local counter
+
+	counter=0
+	for i in "${!arr_ref[@]}"; do
+		if [[ "${arr_ref[$i]}" == "PROX" ]]; then
+			((counter++))
+		fi
+	done
+
+	echo "$counter"
 }

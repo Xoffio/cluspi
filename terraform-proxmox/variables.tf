@@ -1,9 +1,9 @@
-variable "num_control_nodes" {
+variable "control_node_count" {
   type    = number
   default = 1
 }
 
-variable "num_worker_nodes" {
+variable "worker_node_count" {
   type    = number
   default = 3
 }
@@ -31,10 +31,9 @@ variable "pm_api_token_secret" {
 # |-----------------------------------------------------|
 # |              CONTROL NODE VARIABLES                 |
 # |-----------------------------------------------------|
-variable "control_node_name" {
-  default     = "control"
+variable "control_node_names" {
   description = "Name for the control nodes"
-  type        = string
+  type        = list(string)
 }
 
 variable "control_node_cores" {
@@ -68,10 +67,9 @@ variable "control_node_prox_target_node" {
 # |-----------------------------------------------------|
 # |               WORKER NODE VARIABLES                 |
 # |-----------------------------------------------------|
-variable "worker_node_name" {
-  default     = "worker"
-  description = "Name of the VM"
-  type        = string
+variable "worker_node_names" {
+  description = "Name for the worker nodes"
+  type        = list(string)
 }
 
 variable "worker_node_cores" {

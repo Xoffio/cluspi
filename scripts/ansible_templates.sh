@@ -43,20 +43,20 @@ create_ansible_vars_file() {
 ## |_____________________________________|
 create_ansible_hosts_file() {
 	echo "[main_control]" >"${ansible_host_file}"
-	echo "${CONTROL_NODE_NAME}01 ansible_host=${CONTROL_NODE_IPS[0]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
+	echo "${CONTROL_NODE_NAMES[0]} ansible_host=${CONTROL_NODE_IPS[0]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
 	echo "" >>"${ansible_host_file}"
 
 	echo "[control_nodes]" >>"${ansible_host_file}"
 	for ((n_node = 1; n_node < ${#CONTROL_NODE_IPS[@]}; n_node++)); do
 		current_node_n=$(printf "%2s" "$((n_node + 1))" | tr ' ' '0')
-		echo "${CONTROL_NODE_NAME}${current_node_n} ansible_host=${CONTROL_NODE_IPS[n_node]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
+		echo "${CONTROL_NODE_NAMES[$n_node]} ansible_host=${CONTROL_NODE_IPS[n_node]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
 	done
 	echo "" >>"${ansible_host_file}"
 
 	echo "[worker_nodes]" >>"${ansible_host_file}"
 	for ((n_node = 0; n_node < ${#WORKER_NODE_IPS[@]}; n_node++)); do
 		current_node_n=$(printf "%2s" "$((n_node + 1))" | tr ' ' '0')
-		echo "${WORKER_NODE_NAME}${current_node_n} ansible_host=${WORKER_NODE_IPS[n_node]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
+		echo "${WORKER_NODE_NAMES[$n_node]} ansible_host=${WORKER_NODE_IPS[n_node]%/*} ansible_user=${VM_USER} ansible_ssh_common_args=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"" >>"$ansible_host_file"
 	done
 	echo "" >>"${ansible_host_file}"
 

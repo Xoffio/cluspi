@@ -19,6 +19,7 @@ source ./scripts/ansible_templates.sh
 source ./scripts/ansible_fns.sh
 source ./scripts/terraform_templates.sh
 source ./scripts/terraform_fns.sh
+source ./scripts/validation.sh
 
 display_help() {
 	echo "Usage: $(basename "$0") [OPTIONS]"
@@ -68,6 +69,11 @@ else
 	exit 1
 fi
 
+IFS=',' read -ra CONTROL_NODE_TYPES <<<"$CONTROL_NODE_TYPES"
+IFS=',' read -ra CONTROL_NODE_NAMES <<<"$CONTROL_NODE_NAMES"
+IFS=',' read -ra WORKER_NODE_TYPES <<<"$WORKER_NODE_TYPES"
+IFS=',' read -ra WORKER_NODE_NAMES <<<"$WORKER_NODE_NAMES"
+
 #  ____________________________________________________________
 # |                      Load CLI Parameters                   |
 # |____________________________________________________________|
@@ -103,17 +109,22 @@ if [ "$IS_DESTROY" -eq 0 ] && [ "$IS_UNINSTALL" -eq 0 ]; then
 		echo "You need to set the option '--datastore'"
 		display_help
 	else
-		if [ "$K3S_DATASTORE" == "ETCD" ] && [ "$NUM_CONTROL_NODES" -lt 3 ]; then
+		if [ "$K3S_DATASTORE" == "ETCD" ] && [ "$CONTROL_NODE_COUNT" -lt 3 ]; then
 			echo "ETCD needs a minimum of 3 control nodes."
 			display_help
 		fi
 
-		if [ "$K3S_DATASTORE" == "NONHA" ] && [ "$NUM_CONTROL_NODES" -gt 1 ]; then
+		if [ "$K3S_DATASTORE" == "NONHA" ] && [ "$CONTROL_NODE_COUNT" -gt 1 ]; then
 			echo "NONHA can only have one control node."
 			display_help
 		fi
 	fi
 fi
+
+is_control_node_types_valid
+is_worker_node_types_valid
+CONTROL_NODE_COUNT_TF=$(get_n_prox_nodes CONTROL_NODE_TYPES)
+WORKER_NODE_COUNT_TF=$(get_n_prox_nodes WORKER_NODE_TYPES)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
@@ -132,7 +143,6 @@ create_ansible_hosts_file
 ##  ______________________________________
 ## |              DEPLOYMENT             |
 ## |_____________________________________|
-
 if [ "$IS_DESTROY" -eq 0 ]; then
 	create_python_venv
 
