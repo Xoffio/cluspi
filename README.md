@@ -1,7 +1,16 @@
+# Cluspi
 
-Modify `spec.addresses` in the `metallb-conf.yaml` file
+Rename `./.env_sample` to `./.env`, and modify it based on your setup.
 
 ```bash
-ansible-playbook cluspi_install.yaml -i hosts --verbose --ask-become-pass
-ansible-playbook cluspi_uninstall.yaml -i hosts --verbose --ask-become-pass
+
+# Install with external database (mysql)
+./cluspi.sh -d EDB
+
+# Uninstall the cluster
+./cluspi.sh -u
+
+# Destroy the cluster
+./cluspi.sh -x
+
 ```
