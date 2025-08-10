@@ -1,3 +1,8 @@
+- name: Check if K3s kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/k3s/k3s.yaml
+  register: k3s_kubeconfig
+
 - name: Check if Helm is already installed
   ansible.builtin.stat:
     path: /usr/local/bin/helm
@@ -9,7 +14,9 @@
     name: cert-manager
     release_namespace: cert-manager
     state: absent
-  when: helm_binary.stat.exists
+  when: 
+    - helm_binary.stat.exists
+    - k3s_kubeconfig.stat.exists
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
@@ -35,7 +42,9 @@
     name: rancher
     release_namespace: cattle-system
     state: absent
-  when: helm_binary.stat.exists
+  when: 
+    - helm_binary.stat.exists
+    - k3s_kubeconfig.stat.exists
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 

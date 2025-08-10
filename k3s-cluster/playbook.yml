@@ -33,3 +33,4 @@
   become: true
   roles:
     - role: rancher
+      when: install_rancher | default(false) | bool

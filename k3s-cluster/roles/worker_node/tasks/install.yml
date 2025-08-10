@@ -4,7 +4,7 @@
     dest: /tmp/k3s-install.sh
     mode: '0755'
 
-- name: Install control node (ETCD)
+- name: Install worker node
   ansible.builtin.shell: |
     /tmp/k3s-install.sh
   args:

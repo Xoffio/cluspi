@@ -25,6 +25,7 @@ create_ansible_vars_file() {
 	echo "metallb_ip_range: \"$METALLB_IP_RANGE\"" >>"$ansible_var_file"
 	echo "" >>"$ansible_var_file"
 
+	echo "install_rancher: \"$INSTALL_RANCHER\"" >>"$ansible_var_file"
 	echo "rancher_ver: \"$RANCHER_VER\"" >>"$ansible_var_file"
 	echo "cert_manager_ver: \"$CERT_MANAGER_VER\"" >>"$ansible_var_file"
 	echo "rancher_n_replicas: \"$RANCHER_N_REPLICAS\"" >>"$ansible_var_file"

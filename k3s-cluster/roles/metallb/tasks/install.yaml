@@ -16,20 +16,72 @@
     dest: /tmp/metallb-kustomization/metallb-conf.yaml
     mode: '0644'
 
+# - name: Check if MetalLB controller deployment exists
+#   kubernetes.core.k8s_info:
+#     api_version: apps/v1
+#     kind: Deployment
+#     namespace: metallb-system
+#     name: controller
+#   register: metallb_deploy_info
+#   failed_when: false
+
+- name: Check if MetalLB controller deployment exists
+  ansible.builtin.command: >
+    kubectl get deploy controller -n metallb-system -o json
+  register: metallb_deploy_json
+  failed_when: false
+  run_once: true
+
+- name: Set fact - metallb_installed
+  ansible.builtin.set_fact:
+    metallb_installed: "{{ metallb_deploy_json is defined and (metallb_deploy_json.rc | int) == 0 }}"
+
+- name: Show diff for MetalLB manifest (only when not installed)
+  ansible.builtin.command:
+    cmd: kubectl diff -k /tmp/metallb-kustomization
+  register: metallb_manifest_diff
+  failed_when: false # rc 0 = no diff, 1 = diff
+  changed_when: metallb_manifest_diff.rc == 1
+  when: metallb_installed
+
+- name: Treat error as "needs apply"
+  ansible.builtin.set_fact:
+    metallb_diff_rc: >-
+      {{ 1 if (metallb_manifest_diff is not defined
+               or metallb_manifest_diff.rc is not defined
+               or metallb_manifest_diff.rc|int != 0)
+         else 0 }}
+
 - name: Apply MetalLB manifest
   ansible.builtin.shell: |
     kubectl apply -k /tmp/metallb-kustomization
   register: apply_result
   changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
-  # changed_when: false
+  when: not (metallb_installed | default(false)) or (metallb_diff_rc | default(1) | int == 1)
 
-- name: Pause for 60 sec to apply MetalLB configurations
-  ansible.builtin.pause:
-    seconds: 60
+- name: Wait for MetalLB controller to be ready
+  shell: >
+    kubectl get pods -n metallb-system -l component=controller -o jsonpath='{.items[0].status.containerStatuses[0].ready}'
+  register: metallb_ready
+  until: metallb_ready.stdout == "true"
+  retries: 60
+  delay: 5
+  when: not (metallb_installed | default(false)) or (metallb_diff_rc | default(1) | int == 1)
+
+- name: Diff MetalLB configuration
+  ansible.builtin.command:
+    cmd: kubectl diff -f /tmp/metallb-kustomization/metallb-conf.yaml
+  register: metallb_conf_diff
+  failed_when: false
+  changed_when: metallb_conf_diff.rc == 1
 
 - name: Apply MetalLB configuration
   ansible.builtin.shell: |
     kubectl apply -f /tmp/metallb-kustomization/metallb-conf.yaml
   register: apply_result
   changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
-  # changed_when: false
+  when: 
+    - metallb_installed
+    - metallb_conf_diff is defined
+    - metallb_conf_diff.rc is defined
+    - metallb_conf_diff.rc != 0

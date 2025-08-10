@@ -9,6 +9,7 @@ MAIN_CONTROL_KUBEPORT="6443"
 METALLB_VER="0.15.2"
 RANCHER_VER="3.18.3"
 CERT_MANAGER_VER="1.18.1"
+INSTALL_RANCHER=false
 RANCHER_N_REPLICAS=1
 
 terraform_var_file="./terraform-proxmox/terraform.tfvars"
@@ -87,6 +88,7 @@ while [ "$1" != "" ]; do
 		IS_UNINSTALL=1
 		;;
 	--destroy | -x)
+		IS_UNINSTALL=1
 		IS_DESTROY=1
 		;;
 	--help | -h)
@@ -143,21 +145,20 @@ create_ansible_hosts_file
 ##  ______________________________________
 ## |              DEPLOYMENT             |
 ## |_____________________________________|
-if [ "$IS_DESTROY" -eq 0 ]; then
-	create_python_venv
+create_python_venv
 
-	if [ "$IS_UNINSTALL" -eq 0 ]; then
-		deploy_vms
-	fi
+if [ "$IS_UNINSTALL" -eq 0 ]; then
+	deploy_vms
+fi
 
-	activate_python_venv
-	check_ssh_connection
-
-	if [ "$IS_UNINSTALL" -eq 0 ]; then
-		ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml
-	else
-		ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -e "uninstall_k3s=true"
-	fi
+activate_python_venv
+check_ssh_connection
+if [ "$IS_UNINSTALL" -eq 0 ]; then
+	ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -v
 else
+	ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -e "uninstall_k3s=true"
+fi
+
+if [ "$IS_DESTROY" -eq 1 ]; then
 	destroy_vms
 fi
