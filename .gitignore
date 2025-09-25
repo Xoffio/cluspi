@@ -8,3 +8,7 @@
 *.tfstate.backup
 *.lock.hcl
 *.tfvars
+
+# Packer
+packer_cache/
+downloaded_iso_path/
