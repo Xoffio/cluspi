@@ -31,31 +31,47 @@ source "proxmox-iso" "ubuntu-server-2404" {
   # (Optional) Skip TLS Verification
   insecure_skip_tls_verify = true
 
-  # VM General Settings
+  # ---- VM General Settings ----
+  node                 = "${var.node_name}"
+  vm_id                = "${var.template_id}"
   vm_name              = "ubuntu-server-2404"
   template_description = "Ubuntu Server 20.04 Image"
 
-  # VM OS Settings
-  os = "l26"
+  # ---- VM OS Settings ---- 
+  os = "l26" # Linux2.6+
+  boot_iso {
+    type = "scsi"
 
-  # VM System Settings
+    # (Option 1) Local ISO File
+    # iso_file = "prox-backups:iso/noble-server-cloudimg-amd64.img"
+    # - or -
+    # (Option 2) Download ISO
+    iso_url          = "https://releases.ubuntu.com/noble/ubuntu-24.04.3-live-server-amd64.iso"
+    iso_checksum     = "c3514bf0056180d09376462a7a1b4f213c1d6e8ea67fae5c25099c6fd3d8274b"
+    iso_storage_pool = "local"
+    unmount          = true
+    iso_download_pve = true
+  }
+
+  # ---- VM System Settings ----
+  machine    = "q35"
   qemu_agent = true
 
-  # VM Hard Disk Settings
+  # ---- VM Hard Disk Settings ----
   scsi_controller = "virtio-scsi-pci"
 
   disks {
-    disk_size    = "16G"
-    format       = "raw"
-    storage_pool = "local"
     type         = "virtio"
+    storage_pool = "local"
+    disk_size    = "16G"
+    format       = "qcow2"
   }
 
-  # VM CPU Settings
+  # ---- VM CPU Settings ---- 
   cores    = "1"
   cpu_type = "host"
 
-  # VM Memory Settings
+  # ---- VM Memory Settings ----
   memory = "2048"
 
   # VM Network Settings
@@ -69,18 +85,6 @@ source "proxmox-iso" "ubuntu-server-2404" {
   cloud_init              = true
   cloud_init_storage_pool = "local"
 
-  boot_iso {
-    type = "scsi"
-
-    # (Option 1) Local ISO File
-    # iso_file = "prox-backups:iso/noble-server-cloudimg-amd64.img"
-    # - or -
-    # (Option 2) Download ISO
-    iso_url          = "https://releases.ubuntu.com/noble/ubuntu-24.04.3-live-server-amd64.iso"
-    iso_checksum     = "c3514bf0056180d09376462a7a1b4f213c1d6e8ea67fae5c25099c6fd3d8274b"
-    unmount          = true
-    iso_download_pve = true
-  }
 
   # PACKER Boot Commands 
   boot_command = [
