@@ -19,6 +19,25 @@ variable "proxmox_api_token_secret" {
   sensitive = true
 }
 
+variable "node_name" {
+  type        = string
+  description = "Proxmox node name"
+}
+
+variable "template_id" {
+  type        = number
+  description = "VM ID for the template"
+}
+
+variable "autoinstall_ip" {
+  type    = string
+  default = "{{ .HTTPIP }}" # leave blank to fall back to .HTTPIP
+}
+
+variable "ssh_username" {
+  type        = string
+  description = "SSH username to connect to the template"
+}
 
 # Resource Definition for the VM Template
 source "proxmox-iso" "ubuntu-server-2404" {
@@ -32,8 +51,8 @@ source "proxmox-iso" "ubuntu-server-2404" {
   insecure_skip_tls_verify = true
 
   # ---- VM General Settings ----
-  node                 = "${var.node_name}"
-  vm_id                = "${var.template_id}"
+  node                 = var.node_name
+  vm_id                = var.template_id
   vm_name              = "ubuntu-server-2404"
   template_description = "Ubuntu Server 20.04 Image"
 
@@ -74,17 +93,15 @@ source "proxmox-iso" "ubuntu-server-2404" {
   # ---- VM Memory Settings ----
   memory = "2048"
 
-  # VM Network Settings
+  # ---- VM Network Settings ----
   network_adapters {
-    model    = "virtio"
-    bridge   = "vmbr0"
-    firewall = "false"
+    bridge = "vmbr0"
+    model  = "virtio"
   }
 
   # VM Cloud-Init Settings
   cloud_init              = true
   cloud_init_storage_pool = "local"
-
 
   # PACKER Boot Commands 
   boot_command = [
@@ -92,6 +109,8 @@ source "proxmox-iso" "ubuntu-server-2404" {
     "e<wait>",
     "<down><down><down><end>",
     "<bs><bs><bs><bs><wait>",
+    # "autoinstall \"ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/\" ---<wait>",
+    "autoinstall \"ds=nocloud-net;s=http://${var.autoinstall_ip}:{{ .HTTPPort }}/\" ---<wait>",
     "<f10><wait>"
   ]
 
@@ -105,13 +124,49 @@ source "proxmox-iso" "ubuntu-server-2404" {
   # http_port_min     = 8880
   # http_port_max     = 8890
 
+  ssh_username = "${var.ssh_username}"
 
   # (Option 1) Add your Password here
-  # ssh_password = "61guney61"
+  # ssh_password = "STRONG_PASS_HERE"
   # - or -
   # (Option 2) Add your Private SSH KEY file here
+  ssh_private_key_file = "~/.ssh/id_rsa"
 
   # Raise the timeout, when installation takes longer
   ssh_timeout = "20m"
 }
 
+build {
+  name    = "ubuntu-server-2404"
+  sources = ["source.proxmox-iso.ubuntu-server-2404"]
+
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
+  # Shell (cleanup + make it clone-safe)
+  provisioner "shell" {
+    inline = [
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+      "sudo rm /etc/ssh/ssh_host_*",
+      "sudo truncate -s 0 /etc/machine-id",
+      "sudo apt -y autoremove --purge",
+      "sudo apt -y clean",
+      "sudo apt -y autoclean",
+      "sudo cloud-init clean",
+      "sudo rm -f /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg",
+      "sudo rm -f /etc/netplan/00-installer-config.yaml",
+      "sudo sync",
+    ]
+  }
+
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #2
+  provisioner "file" {
+    source      = "${path.root}/cloud-init-config/99-pve.cfg"
+    destination = "/tmp/99-pve.cfg"
+  }
+
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #3
+  provisioner "shell" {
+    inline = [
+      "sudo cp /tmp/99-pve.cfg /etc/cloud/cloud.cfg.d/99-pve.cfg"
+    ]
+  }
+}
