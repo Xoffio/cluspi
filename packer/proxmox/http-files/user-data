@@ -23,3 +23,12 @@ autoinstall:
     package_upgrade: false
     timezone: America/New_York
     users:
+      - name: USERNAME-HERE
+        groups: [adm, sudo]
+        lock-passwd: true
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        #passwd: STRONG_PASS_HERE
+        # - or -
+        # ssh_authorized_keys:
+        #   - 
