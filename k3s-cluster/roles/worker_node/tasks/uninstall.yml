@@ -1,9 +1,9 @@
 - name: Check if K3s uninstall script exists
   ansible.builtin.stat:
-    path: /usr/local/bin/k3s-uninstall.sh
+    path: /usr/local/bin/k3s-agent-uninstall.sh
   register: k3s_uninstall_script
 
 - name: Uninstall the main control node
   become: true
-  ansible.builtin.command: /usr/local/bin/k3s-uninstall.sh
+  ansible.builtin.command: /usr/local/bin/k3s-agent-uninstall.sh
   when: k3s_uninstall_script.stat.exists

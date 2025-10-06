@@ -2,6 +2,6 @@
   ansible.builtin.include_tasks: uninstall.yml
   when: uninstall_k3s | default(false)
 
-- name: Include etcd install tasks
+- name: Include worker node install tasks
   ansible.builtin.include_tasks: install.yml
   when: not uninstall_k3s | default(false)
