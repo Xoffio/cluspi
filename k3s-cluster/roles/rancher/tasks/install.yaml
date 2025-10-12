@@ -95,15 +95,3 @@
     src: rancher-cip.yaml
     dest: /tmp/rancher-cip.yaml
     mode: '0644'
-
-- name: Apply ClusterIP for Rancher
-  ansible.builtin.shell: |
-    kubectl apply -f /tmp/rancher-cip.yaml
-  register: apply_result
-  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"
-
-- name: Apply Ingress for Rancher
-  ansible.builtin.shell: |
-    kubectl apply -f /tmp/rancher-ui-ingress.yaml
-  register: apply_result
-  changed_when: "'configured' not in apply_result.stdout and 'unchanged' not in apply_result.stdout"

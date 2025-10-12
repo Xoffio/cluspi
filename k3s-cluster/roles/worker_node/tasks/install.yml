@@ -1,16 +1,22 @@
+- name: Check for k3s presence
+  ansible.builtin.command: k3s --version
+  register: k3s_version_cmd
+  failed_when: false
+  changed_when: false
+
 - name: Download K3s install script
   ansible.builtin.get_url:
     url: https://get.k3s.io
     dest: /tmp/k3s-install.sh
     mode: '0755'
+  when: k3s_version_cmd.rc != 0 or (k3s_ver not in (k3s_version_cmd.stdout | default('')))
 
 - name: Install worker node
   ansible.builtin.shell: |
     /tmp/k3s-install.sh
-  args:
-    creates: /etc/systemd/system/k3s.service
   environment:
     INSTALL_K3S_CHANNEL: "v{{ k3s_ver }}"
     INSTALL_K3S_EXEC: "agent"
     K3S_TOKEN: "{{  hostvars[groups['main_control'][0]].k3s_token }}"
     K3S_URL: "https://{{ control_lb_virtual_ip }}:{{ main_control_kubeport }}"
+  when: k3s_version_cmd.rc != 0 or (k3s_ver not in (k3s_version_cmd.stdout | default('')))

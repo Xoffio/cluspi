@@ -1,16 +1,22 @@
+- name: Check for k3s presence
+  ansible.builtin.command: k3s --version
+  register: k3s_version_cmd
+  failed_when: false
+  changed_when: false
+
 - name: Download K3s install script
   ansible.builtin.get_url:
     url: https://get.k3s.io
     dest: /tmp/k3s-install.sh
     mode: '0755'
+  when: k3s_version_cmd.rc != 0 or (k3s_ver not in (k3s_version_cmd.stdout | default('')))
 
 - name: Install the main control node (EDB)
   ansible.builtin.shell: |
     /tmp/k3s-install.sh
-  # args:
-  #   creates: /etc/systemd/system/k3s.service
   environment:
     INSTALL_K3S_CHANNEL: "v{{ k3s_ver }}"
-    INSTALL_K3S_EXEC: "server --disable servicelb --tls-san {{ control_lb_virtual_ip }} --datastore-endpoint mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"
+    INSTALL_K3S_EXEC: "server --disable servicelb --tls-san {{ control_lb_virtual_ip }}"
     K3S_KUBECONFIG_MODE: "644"
-    # K3S_DATASTORE_ENDPOINT: "mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"
+    K3S_DATASTORE_ENDPOINT: "mysql://{{ db_user }}:{{ db_pass }}@tcp({{ db_host }}:{{ db_port }})/{{ db_name }}"
+  when: k3s_version_cmd.rc != 0 or (k3s_ver not in (k3s_version_cmd.stdout | default('')))
