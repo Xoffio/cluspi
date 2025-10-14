@@ -8,7 +8,7 @@ create_ansible_vars_file() {
 	: "${METALLB_VER:?METALLB_VER is required}"
 	: "${METALLB_IP_RANGE:?METALLB_IP_RANGE is required}"
 
-	: "${RANCHER_VER:?RANCHER_VER is required}"
+	: "${HELM_VER:?HELM_VER is required}"
 	: "${CERT_MANAGER_VER:?CERT_MANAGER_VER is required}"
 	: "${RANCHER_N_REPLICAS:?RANCHER_N_REPLICAS is required}"
 	: "${RANCHER_FQDN:?RANCHER_FQDN is required}"
@@ -26,8 +26,9 @@ create_ansible_vars_file() {
 	echo "" >>"$ansible_var_file"
 
 	echo "install_rancher: \"$INSTALL_RANCHER\"" >>"$ansible_var_file"
-	echo "rancher_ver: \"$RANCHER_VER\"" >>"$ansible_var_file"
+	echo "helm_ver: \"$HELM_VER\"" >>"$ansible_var_file"
 	echo "cert_manager_ver: \"$CERT_MANAGER_VER\"" >>"$ansible_var_file"
+	echo "rancher_ver: \"$RANCHER_VER\"" >>"$ansible_var_file"
 	echo "rancher_n_replicas: \"$RANCHER_N_REPLICAS\"" >>"$ansible_var_file"
 	echo "rancher_fqdn: \"$RANCHER_FQDN\"" >>"$ansible_var_file"
 	echo "" >>"$ansible_var_file"

@@ -28,9 +28,16 @@
   roles:
     - role: metallb
 
+- name: Prepare local dev machine for k3s management
+  hosts: localhost
+  roles:
+    - role: dev_machine
+      vars:
+        control_host: "{{ groups['main_control'][0] }}"
+        remote_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+
 - name: Install Rancher
-  hosts: main_control
-  become: true
+  hosts: localhost
+  connection: local
   roles:
     - role: rancher
-      when: install_rancher | default(false) | bool

@@ -1,38 +1,21 @@
-- name: Check if K3s kubeconfig exists
-  ansible.builtin.stat:
-    path: /etc/rancher/k3s/k3s.yaml
-  register: k3s_kubeconfig
-
-- name: Check if Helm is already installed
-  ansible.builtin.stat:
-    path: /usr/local/bin/helm
-  register: helm_binary
-
 # ---- Uninstall Cert Manager ----
 - name: Uninstall Cert Manager Helm release
   kubernetes.core.helm:
     name: cert-manager
     release_namespace: cert-manager
     state: absent
-  when: 
-    - helm_binary.stat.exists
-    - k3s_kubeconfig.stat.exists
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: Remove Jetstack Helm repository
   kubernetes.core.helm_repository:
     name: jetstack
     state: absent
-  when: helm_binary.stat.exists
 
 - name: Delete Cert Manager CRDs
   ansible.builtin.shell: |
-    kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v{{ cert_manager_ver }}/cert-manager.crds.yaml
+    kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v{{ cert_manager_ver }}/cert-manager.crds.yaml --ignore-not-found=true
   register: crd_delete
   changed_when: "'deleted' in crd_delete.stdout"
-  failed_when: crd_delete.rc != 0 and 'NotFound' not in crd_delete.stdout
-  ignore_errors: true
+  # ignore_errors: true
 
 # TODO: Remove cert-manager namespace. TBD since it will fail if it is not empty
 
@@ -42,35 +25,8 @@
     name: rancher
     release_namespace: cattle-system
     state: absent
-  when: 
-    - helm_binary.stat.exists
-    - k3s_kubeconfig.stat.exists
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: Delete Rancher Ingress manifest
-  ansible.builtin.shell: |
-    kubectl delete -f /tmp/rancher-ui-ingress.yaml
-  register: delete_ingress
-  changed_when: "'deleted' in delete_ingress.stdout"
-  failed_when: delete_ingress.rc != 0 and 'NotFound' not in delete_ingress.stdout
-  ignore_errors: true
-
-- name: Delete Rancher ClusterIP manifest
-  ansible.builtin.shell: |
-    kubectl delete -f /tmp/rancher-cip.yaml
-  register: delete_cip
-  changed_when: "'deleted' in delete_cip.stdout"
-  failed_when: delete_cip.rc != 0 and 'NotFound' not in delete_cip.stdout
-  ignore_errors: true
 
 - name: Remove Rancher Helm repository
   kubernetes.core.helm_repository:
     name: rancher-stable
-    state: absent
-  when: helm_binary.stat.exists
-
-- name: Remove Rancher ClusterIP manifest file
-  ansible.builtin.file:
-    path: /tmp/rancher-cip.yaml
     state: absent

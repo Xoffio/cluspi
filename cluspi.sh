@@ -7,8 +7,9 @@ K3S_VER="1.32.5+k3s1"
 K3S_DATASTORE=""
 MAIN_CONTROL_KUBEPORT="6443"
 METALLB_VER="0.15.2"
-RANCHER_VER="3.18.3"
+HELM_VER="3.18.3"
 CERT_MANAGER_VER="1.18.1"
+RANCHER_VER="2.12.2"
 INSTALL_RANCHER=false
 RANCHER_N_REPLICAS=1
 
@@ -152,11 +153,14 @@ if [ "$IS_UNINSTALL" -eq 0 ]; then
 fi
 
 activate_python_venv
-check_ssh_connection
 if [ "$IS_UNINSTALL" -eq 0 ]; then
-	ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -v
+	check_ssh_connection
+	ansible-playbook k3s-cluster/install.yml -i k3s-cluster/inventory/hosts.yml
+	# ansible-playbook k3s-cluster/playbook.yml --list-tasks
+	# ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -vv --step --start-at-task "dev_machine : Check if Helm is already installed" #2>&1 | tee "cluspi_$(date +%F_%H-%M-%S).log"
+	# ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml --step #2>&1 | tee "cluspi_$(date +%F_%H-%M-%S).log"
 else
-	ansible-playbook k3s-cluster/playbook.yml -i k3s-cluster/inventory/hosts.yml -e "uninstall_k3s=true"
+	ansible-playbook k3s-cluster/uninstall.yml -i k3s-cluster/inventory/hosts.yml -e "uninstall_k3s=true"
 fi
 
 if [ "$IS_DESTROY" -eq 1 ]; then

@@ -1,33 +1,3 @@
-# ---- Install Helm ----
-- name: Check if Helm is already installed
-  ansible.builtin.stat:
-    path: /usr/local/bin/helm
-  register: helm_binary
-
-- name: Download Helm tarball
-  ansible.builtin.get_url:
-    url: "https://get.helm.sh/helm-v{{ rancher_ver }}-linux-amd64.tar.gz"
-    dest: "/tmp/helm-v{{ rancher_ver }}-linux-amd64.tar.gz"
-  when: not helm_binary.stat.exists
-
-- name: Extract Helm tarball
-  ansible.builtin.unarchive:
-    src: /tmp/helm-v{{ rancher_ver }}-linux-amd64.tar.gz
-    dest: /tmp/
-    remote_src: true
-  when: not helm_binary.stat.exists
-
-- name: Install Helm binary
-  ansible.builtin.copy:
-    src: /tmp/linux-amd64/helm
-    dest: /usr/local/bin/helm
-    mode: '0755'
-    owner: root
-    group: root
-    remote_src: true
-  become: true
-  when: not helm_binary.stat.exists
-
 # ---- Install Cert Manager ----
 - name: Install Cert Manager CRDs
   ansible.builtin.shell: |
@@ -50,8 +20,8 @@
     create_namespace: true
     update_repo_cache: true
     wait: true
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    wait_timeout: 15m0s
+    atomic: true
 
 # ---- Install Rancher ----
 - name: Add Rancher Helm repository
@@ -63,35 +33,13 @@
   kubernetes.core.helm:
     name: rancher
     chart_ref: rancher-stable/rancher
+    chart_version: "{{ rancher_ver }}"
     release_namespace: cattle-system
     state: present
     create_namespace: true
     update_repo_cache: true
     wait: true
+    wait_timeout: 30m0s
     values:
       hostname: "{{ rancher_fqdn }}"
       replicas: "{{ rancher_n_replicas }}"
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: Get Rancher's bootstrap secret
-  ansible.builtin.shell: >
-    kubectl get secret --namespace cattle-system bootstrap-secret -o go-template='{{"{{"}}.data.bootstrapPassword | base64decode {{"}}"}}'
-  register: rancher_bootstrap_secret
-  changed_when: false
-
-- name: Output Rancher bootstrap token
-  ansible.builtin.debug:
-    msg: "Rancher bootstrap token: {{ rancher_bootstrap_secret.stdout }}"
-
-- name: Copy the ingress template
-  ansible.builtin.template:
-    src: rancher-ui-ingress.yaml.j2
-    dest: /tmp/rancher-ui-ingress.yaml
-    mode: '0644'
-
-- name: Copy the ClusterIP yaml file
-  ansible.builtin.copy:
-    src: rancher-cip.yaml
-    dest: /tmp/rancher-cip.yaml
-    mode: '0644'

@@ -3,7 +3,7 @@
     path: /usr/local/bin/k3s-agent-uninstall.sh
   register: k3s_uninstall_script
 
-- name: Uninstall the main control node
+- name: Uninstall worker node
   become: true
   ansible.builtin.command: /usr/local/bin/k3s-agent-uninstall.sh
   when: k3s_uninstall_script.stat.exists

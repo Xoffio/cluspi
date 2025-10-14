@@ -1,3 +1,21 @@
+- name: Create metallb-kustomization directory
+  ansible.builtin.file:
+    path: /tmp/metallb-kustomization
+    state: directory
+    mode: '0755'
+
+- name: Copy kustomization.yaml
+  ansible.builtin.template:
+    src: kustomization.yaml.j2
+    dest: /tmp/metallb-kustomization/kustomization.yaml
+    mode: '0644'
+
+- name: Copy metallb-conf.yaml
+  ansible.builtin.template:
+    src: metallb-conf.yaml.j2
+    dest: /tmp/metallb-kustomization/metallb-conf.yaml
+    mode: '0644'
+
 - name: Check if kubectl is available
   ansible.builtin.command: which kubectl
   register: kubectl_check
@@ -5,18 +23,16 @@
 
 - name: Delete MetalLB configuration
   ansible.builtin.shell: |
-    kubectl delete -k /tmp/metallb-kustomization/metallb-conf.yaml
+    kubectl delete -f /tmp/metallb-kustomization/metallb-conf.yaml --ignore-not-found=true
   register: delete_metallb
   changed_when: "'deleted' in delete_metallb.stdout"
-  failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
   when: kubectl_check.rc == 0
 
 - name: Delete MetalLB manifest
   ansible.builtin.shell: |
-    kubectl delete -k /tmp/metallb-kustomization
+    kubectl delete -k /tmp/metallb-kustomization --ignore-not-found=true --cascade=background --wait=false
   register: delete_metallb
   changed_when: "'deleted' in delete_metallb.stdout"
-  failed_when: delete_metallb.rc != 0 and 'NotFound' not in delete_metallb.stdout
   when: kubectl_check.rc == 0
 
 - name: Delete metallb-kustomization directory
