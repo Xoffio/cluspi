@@ -1,16 +1,38 @@
 - name: Prepare local dev machine for k3s management
   hosts: localhost
+  vars:
+    control_host: "{{ groups['main_control'][0] }}"
+    remote_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+
+  pre_tasks:
+    - name: Check if remote k3s kubeconfig exists on control host
+      ansible.builtin.stat:
+        path: "{{ remote_kubeconfig }}"
+      become: true
+      register: k3s_conf
+      delegate_to: "{{ control_host }}"
+      failed_when: false
+
+    - name: Store existence flag on localhost
+      ansible.builtin.set_fact:
+        k3s_exists: "{{ (k3s_conf is defined) and (k3s_conf.stat is defined) and (k3s_conf.stat.exists | default(false)) }}"
   roles:
     - role: dev_machine
-      vars:
-        control_host: "{{ groups['main_control'][0] }}"
-        remote_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+      when: k3s_exists | default(false) | bool
 
 - name: Uninstall Rancher
   hosts: localhost
   connection: local
   roles:
     - role: rancher
+      when: hostvars['localhost']['k3s_exists'] | bool
+
+- name: Uninstall Cert-Manager
+  hosts: localhost
+  connection: local
+  roles:
+    - role: cert_manager
+      when: hostvars['localhost']['k3s_exists'] | bool
 
 - name: Remove MetalLB load balancer
   hosts: main_control

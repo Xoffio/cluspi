@@ -1,0 +1,10 @@
+- name: Drop the MySQL database
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: absent
+    login_host: "{{ db_host }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+  delegate_to: localhost
+  run_once: true
+  become: false

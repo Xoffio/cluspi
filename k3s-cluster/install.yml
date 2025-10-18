@@ -36,6 +36,12 @@
         control_host: "{{ groups['main_control'][0] }}"
         remote_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
 
+- name: Install Cert-Manager
+  hosts: localhost
+  connection: local
+  roles:
+    - role: cert_manager
+
 - name: Install Rancher
   hosts: localhost
   connection: local

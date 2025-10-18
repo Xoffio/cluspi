@@ -1,0 +1,3 @@
+dependencies:
+  - role: cert_manager
+    when: not uninstall_k3s | default(false)

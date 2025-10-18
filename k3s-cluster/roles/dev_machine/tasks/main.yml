@@ -1,3 +1,9 @@
+- name: Ensure ~/.kube exists locally
+  ansible.builtin.file:
+    path: "{{ lookup('env','HOME') }}/.kube"
+    state: directory
+    mode: "0700"
+
 - name: Fetch kubeconfig from main control
   ansible.builtin.fetch:
     src: "/etc/rancher/k3s/k3s.yaml"
@@ -5,12 +11,6 @@
     flat: true
   run_once: true
   delegate_to: "{{ control_host }}"
-
-- name: Ensure ~/.kube exists locally
-  ansible.builtin.file:
-    path: "{{ local_kubeconfig | dirname }}"
-    state: directory
-    mode: "0700"
 
 - name: Point kubeconfig server to the LB VIP
   replace:

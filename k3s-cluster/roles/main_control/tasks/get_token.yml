@@ -1,4 +1,4 @@
-- name: Get K3s token
+- name: Get k3s token
   slurp:
     src: /var/lib/rancher/k3s/server/node-token
   register: k3s_token_raw

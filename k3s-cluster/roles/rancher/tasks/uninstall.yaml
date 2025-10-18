@@ -1,25 +1,3 @@
-# ---- Uninstall Cert Manager ----
-- name: Uninstall Cert Manager Helm release
-  kubernetes.core.helm:
-    name: cert-manager
-    release_namespace: cert-manager
-    state: absent
-
-- name: Remove Jetstack Helm repository
-  kubernetes.core.helm_repository:
-    name: jetstack
-    state: absent
-
-- name: Delete Cert Manager CRDs
-  ansible.builtin.shell: |
-    kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v{{ cert_manager_ver }}/cert-manager.crds.yaml --ignore-not-found=true
-  register: crd_delete
-  changed_when: "'deleted' in crd_delete.stdout"
-  # ignore_errors: true
-
-# TODO: Remove cert-manager namespace. TBD since it will fail if it is not empty
-
-# ---- Uninstall Rancher ----
 - name: Uninstall Rancher Helm release
   kubernetes.core.helm:
     name: rancher

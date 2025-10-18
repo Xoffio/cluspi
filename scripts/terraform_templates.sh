@@ -55,10 +55,16 @@ create_terraform_vars_file() {
   : "${PM_API_TOKEN_SECRET:?PM_API_TOKEN_SECRET is required}"
 
   : "${CONTROL_NODE_IPS:?CONTROL_NODE_IPS is required}"
-  : "${CONTROL_NODE_PROX_TARGET_NODE:?CONTROL_NODE_PROX_TARGET_NODE is required}"
+
+  if [ "${CONTROL_NODE_COUNT_TF}" -gt 0 ]; then
+    : "${CONTROL_NODE_PROX_TARGET_NODE:?CONTROL_NODE_PROX_TARGET_NODE is required}"
+  fi
 
   : "${WORKER_NODE_IPS:?WORKER_NODE_IPS is required}"
-  : "${WORKER_NODE_PROX_TARGET_NODE:?WORKER_NODE_PROX_TARGET_NODE is required}"
+
+  if [ "${WORKER_NODE_COUNT_TF}" -gt 0 ]; then
+    : "${WORKER_NODE_PROX_TARGET_NODE:?WORKER_NODE_PROX_TARGET_NODE is required}"
+  fi
 
   : "${CONTROL_NODE_LB_IPS:?CONTROL_NODE_LB_IPS is required}"
   : "${CONTROL_NODE_LB_PROX_TARGET_NODE:?CONTROL_NODE_LB_PROX_TARGET_NODE is required}"

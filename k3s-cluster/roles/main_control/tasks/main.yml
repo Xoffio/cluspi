@@ -1,5 +1,5 @@
-- name: Include uninstall tasks if requested
-  ansible.builtin.include_tasks: uninstall.yml
+- name: Include k3s uninstall tasks if requested
+  ansible.builtin.include_tasks: uninstall_k3s.yml
   when: uninstall_k3s | default(false)
 
 - name: Include etcd install tasks
@@ -7,6 +7,12 @@
   when:
     - not uninstall_k3s | default(false)
     - k3s_datastore == "ETCD"
+
+- name: Include DB drop tasks
+  ansible.builtin.include_tasks: drop_db.yml
+  when:
+    - uninstall_k3s | default(false)
+    - k3s_datastore == "EDB"
 
 - name: Include external DB install tasks
   ansible.builtin.include_tasks: install_with_mysql.yml
