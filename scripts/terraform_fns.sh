@@ -9,7 +9,7 @@ deploy_vms() {
 
 	terraform init --upgrade &&
 		terraform plan &&
-		terraform apply -auto-approve -parallelism 1 || (echo "Terraform Failed" && exit 1)
+		terraform apply -parallelism 1 || (echo "Terraform Failed" && exit 1)
 }
 
 destroy_vms() {

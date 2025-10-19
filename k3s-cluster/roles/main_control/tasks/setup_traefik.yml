@@ -1,0 +1,4 @@
+- name: Copy Traefik config's file
+  ansible.builtin.copy:
+    src: traefik-config.yaml
+    dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml

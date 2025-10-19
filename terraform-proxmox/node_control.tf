@@ -8,6 +8,7 @@ resource "proxmox_vm_qemu" "k3s_control_nodes" {
   full_clone  = true                                           # Create a full independent clone
   scsihw      = "virtio-scsi-single"
   os_type     = "cloud-init" # Enable Cloud-Init support
+  onboot      = true
 
   memory = var.control_node_ram_size
 
