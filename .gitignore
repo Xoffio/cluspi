@@ -12,3 +12,8 @@
 # Packer
 packer_cache/
 downloaded_iso_path/
+
+# Personal cluster definition and backups of local config
+cluster.yaml
+cluster.yaml.bak
+.env.bak

@@ -1,0 +1,89 @@
+# cluspi cluster definition (non-secret settings).
+# Copy to cluster.yaml, or run ./scripts/init_cluster.sh to generate it.
+# Secrets (Proxmox token secret, database password) go in .env.
+#
+# Node types:
+#   PROX = Terraform creates the VM on Proxmox (needs "target")
+#   EXT  = the VM already exists; Terraform skips it, Ansible configures it
+#
+# Order matters for PROX nodes: Terraform tracks them by position in the list.
+# Do not reorder entries that already exist in terraform.tfstate.
+
+proxmox:
+  api_url: https://prox01.lan:8006/api2/json   # Proxmox API URL
+  template: ubuntu-cloud-2404                  # Template to clone for PROX VMs
+  storage: local                               # Storage for the VM disks
+  gateway: 192.168.1.1
+  dns: 192.168.1.1
+
+user:
+  vm_user: ubuntu                              # Login user on the VMs (must have passwordless sudo)
+  github_user: your-github-name                # Pulls SSH public keys from github.com/<name>.keys
+
+# Default sizing for PROX VMs. Optional; the built-in defaults are used when missing.
+resources:
+  control:
+    cores: 2
+    ram: 2048      # MB
+    disk: 32       # GB
+  worker:
+    cores: 1
+    ram: 1024      # MB
+    disk: 32       # GB
+
+control_nodes:
+  - name: cn01
+    type: PROX
+    ip: 192.168.1.101/24
+    target: prox01
+    # cores: 6        # Optional: overrides resources.control for this node
+    # ram: 24576      # Optional (MB)
+    # disk: 32        # Optional (GB)
+  - name: cn02
+    type: PROX
+    ip: 192.168.1.102/24
+    target: prox01
+  - name: cn03
+    type: EXT
+    ip: 192.168.1.103/24
+
+worker_nodes:
+  - name: wn01
+    type: EXT
+    ip: 192.168.1.111/24
+  - name: wn02
+    type: EXT
+    ip: 192.168.1.112/24
+
+# Always two. Terraform always creates them; see TODO.md.
+load_balancers:
+  name: cn-lb
+  nodes:
+    - ip: 192.168.1.145/24
+      target: prox01
+    - ip: 192.168.1.146/24
+      target: prox01
+
+k3s:
+  version: 1.32.9+k3s1
+  datastore: EDB       # Documentation only; the deploy flag -d sets the real value
+  vip: 192.168.1.147   # Control-plane VIP served by the load balancers
+
+database:              # Only used with EDB
+  host: db.lan
+  port: 3306
+  name: k3s
+  user: root           # Password goes in .env as DB_PASS
+
+metallb:
+  version: 0.15.2
+  ip_range: 192.168.1.150-192.168.1.155
+
+addons:
+  helm_version: 3.18.3
+  cert_manager_version: 1.19.0
+  rancher:
+    install: false     # Currently not read by the roles; see TODO.md
+    version: 2.12.2
+    replicas: 1
+    fqdn: cluspi.lan
