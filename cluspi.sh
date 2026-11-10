@@ -3,6 +3,9 @@
 # DEFAULT VARS
 IS_DESTROY=0
 IS_UNINSTALL=0
+SKIP_VMS=0
+CHECK_ONLY=0
+DRY_RUN=0
 K3S_VER="1.32.9+k3s1"
 K3S_DATASTORE=""
 MAIN_CONTROL_KUBEPORT="6443"
@@ -22,6 +25,7 @@ source ./scripts/ansible_fns.sh
 source ./scripts/terraform_templates.sh
 source ./scripts/terraform_fns.sh
 source ./scripts/validation.sh
+source ./scripts/preflight.sh
 
 display_help() {
 	echo "Usage: $(basename "$0") [OPTIONS]"
@@ -40,12 +44,18 @@ display_help() {
 	echo ""
 	echo "  -u, --uninstall                    Uninstall the Kubernetes cluster, leaving the VMs intact."
 	echo "  -x, --destroy                      Destroy the cluster and clean up resources."
+	echo "  -s, --skip-vms                     Skip Terraform. Use for upgrades and reconfiguration of existing nodes."
+	echo "  -c, --check                        Run the read-only pre-flight checks and exit. Changes nothing."
+	echo "  -n, --dry-run                      Run pre-flight, show the Terraform plan and Ansible --check --diff. Changes nothing."
 	echo "  -h, --help                         Show this help message and exit."
 	echo
 	echo "Examples:"
 	echo "  $(basename "$0")           # Run the script normally (e.g., deploy)"
 	echo "  $(basename "$0") --datastore ETCD    # Deploy HA cluster with embedded etcd"
 	echo "  $(basename "$0") --datastore EDB     # Deploy cluster with external database"
+	echo "  $(basename "$0") --datastore EDB --skip-vms  # Upgrade or reconfigure without touching Terraform"
+	echo "  $(basename "$0") --check             # Check cluster.yaml and the live environment"
+	echo "  $(basename "$0") --datastore EDB --dry-run   # Show what a deploy would change"
 	echo "  $(basename "$0") --destroy # Destroy the deployed cluster"
 	echo "  $(basename "$0") --help    # Show this help message"
 	exit 1
@@ -71,6 +81,9 @@ else
 	exit 1
 fi
 
+source ./scripts/config.sh
+load_cluster_config
+
 IFS=',' read -ra CONTROL_NODE_TYPES <<<"$CONTROL_NODE_TYPES"
 IFS=',' read -ra CONTROL_NODE_NAMES <<<"$CONTROL_NODE_NAMES"
 IFS=',' read -ra WORKER_NODE_TYPES <<<"$WORKER_NODE_TYPES"
@@ -92,6 +105,15 @@ while [ "$1" != "" ]; do
 		IS_UNINSTALL=1
 		IS_DESTROY=1
 		;;
+	--skip-vms | -s)
+		SKIP_VMS=1
+		;;
+	--check | -c)
+		CHECK_ONLY=1
+		;;
+	--dry-run | -n)
+		DRY_RUN=1
+		;;
 	--help | -h)
 		display_help
 		;;
@@ -107,7 +129,17 @@ done
 # |                      Verify Variables                      |
 # |____________________________________________________________|
 
-if [ "$IS_DESTROY" -eq 0 ] && [ "$IS_UNINSTALL" -eq 0 ]; then
+if [ "$SKIP_VMS" -eq 1 ] && [ "$IS_DESTROY" -eq 1 ]; then
+	echo "--skip-vms can't be used with --destroy."
+	display_help
+fi
+
+if [ "$DRY_RUN" -eq 1 ] && [ "$IS_UNINSTALL" -eq 1 ]; then
+	echo "--dry-run only applies to deploys."
+	display_help
+fi
+
+if [ "$IS_DESTROY" -eq 0 ] && [ "$IS_UNINSTALL" -eq 0 ] && [ "$CHECK_ONLY" -eq 0 ]; then
 	if [ "$K3S_DATASTORE" != "ETCD" ] && [ "$K3S_DATASTORE" != "EDB" ] && [ "$K3S_DATASTORE" != "NONHA" ]; then
 		echo "You need to set the option '--datastore'"
 		display_help
@@ -133,6 +165,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
 ##  ______________________________________
+## |              Pre-flight            |
+## |_____________________________________|
+if [ "$IS_UNINSTALL" -eq 0 ] || [ "$CHECK_ONLY" -eq 1 ]; then
+	run_preflight "$SKIP_VMS" "$K3S_DATASTORE"
+	PREFLIGHT_STATUS=$?
+	if [ "$CHECK_ONLY" -eq 1 ]; then
+		exit "$PREFLIGHT_STATUS"
+	fi
+	if [ "$PREFLIGHT_STATUS" -ne 0 ]; then
+		echo "Pre-flight checks failed. Fix the [FAIL] items above, then run again. Use --check to see them without deploying."
+		exit 1
+	fi
+fi
+
+##  ______________________________________
 ## |              Terraform              |
 ## |_____________________________________|
 create_terraform_vars_file
@@ -146,10 +193,26 @@ create_ansible_hosts_file
 ##  ______________________________________
 ## |              DEPLOYMENT             |
 ## |_____________________________________|
+if [ "$DRY_RUN" -eq 1 ] && [ "$SKIP_VMS" -eq 0 ]; then
+	echo "== Terraform plan (no changes)"
+	(cd terraform-proxmox && terraform init -input=false && terraform plan -input=false -lock=false) || exit 1
+fi
+
 create_python_venv
 
+if [ "$DRY_RUN" -eq 1 ]; then
+	activate_python_venv
+	echo "== Ansible check mode (no changes; shell and command tasks are skipped)"
+	ansible-playbook k3s-cluster/install.yml -i k3s-cluster/inventory/hosts.yml --check --diff
+	exit $?
+fi
+
 if [ "$IS_UNINSTALL" -eq 0 ]; then
-	deploy_vms
+	if [ "$SKIP_VMS" -eq 1 ]; then
+		echo "Skipping Terraform (--skip-vms)."
+	else
+		deploy_vms
+	fi
 fi
 
 activate_python_venv
