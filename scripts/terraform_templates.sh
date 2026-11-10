@@ -11,6 +11,30 @@ format_ips_for_tfvars() {
   printf "%s%*s%s\n" "$var_name" "$padding" "" "= $formatted_ips"
 }
 
+format_prox_values() {
+  local var_name="$1"
+  local ip_list="$2"
+  local types_name="$3"
+  local padding="$4"
+
+  local -n types_ref=$types_name
+  IFS=',' read -ra ITEMS <<<"$ip_list"
+  local selected=()
+  for i in "${!types_ref[@]}"; do
+    if [[ "${types_ref[$i]}" == "PROX" ]]; then
+      selected+=("${ITEMS[$i]}")
+    fi
+  done
+
+  local formatted="[]"
+  if [ ${#selected[@]} -gt 0 ]; then
+    formatted=$(printf '"%s", ' "${selected[@]}")
+    formatted="[${formatted%, }]"
+  fi
+
+  printf "%s%*s%s\n" "$var_name" "$padding" "" "= $formatted"
+}
+
 format_control_node_names() {
   local var_name="$1"
   local padding="$2"
@@ -23,7 +47,10 @@ format_control_node_names() {
   done
 
   # Export to Terraform format
-  PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  PROX_NODE_NAMES_STR=""
+  if [ ${#formatted_names[@]} -gt 0 ]; then
+    PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  fi
   PROX_NODE_NAMES_STR="[${PROX_NODE_NAMES_STR%,}]"
 
   printf "%s%*s%s\n" "$var_name" "$padding" "" "= $PROX_NODE_NAMES_STR"
@@ -41,7 +68,10 @@ format_worker_node_names() {
   done
 
   # Export to Terraform format
-  PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  PROX_NODE_NAMES_STR=""
+  if [ ${#formatted_names[@]} -gt 0 ]; then
+    PROX_NODE_NAMES_STR=$(printf '"%s",' "${formatted_names[@]}")
+  fi
   PROX_NODE_NAMES_STR="[${PROX_NODE_NAMES_STR%,}]"
 
   printf "%s%*s%s\n" "$var_name" "$padding" "" "= $PROX_NODE_NAMES_STR"
@@ -85,22 +115,22 @@ create_terraform_vars_file() {
 
   # [[ -n "${CONTROL_NODE_NAME:-}" ]] && echo "control_node_name             = \"${CONTROL_NODE_NAME}\"" >>"$terraform_var_file"
   format_control_node_names "control_node_names" "12" >>"$terraform_var_file"
-  [[ -n "${CONTROL_NODE_CORES:-}" ]] && echo "control_node_cores            = ${CONTROL_NODE_CORES}" >>"$terraform_var_file"
-  [[ -n "${CONTROL_NODE_DISK_SIZE:-}" ]] && echo "control_node_disk_size        = ${CONTROL_NODE_DISK_SIZE}" >>"$terraform_var_file"
-  [[ -n "${CONTROL_NODE_RAM_SIZE:-}" ]] && echo "control_node_ram_size         = ${CONTROL_NODE_RAM_SIZE}" >>"$terraform_var_file"
+  echo "control_node_cores            = [${CONTROL_PROX_CORES}]" >>"$terraform_var_file"
+  echo "control_node_disk_size        = [${CONTROL_PROX_DISK}]" >>"$terraform_var_file"
+  echo "control_node_ram_size         = [${CONTROL_PROX_RAM}]" >>"$terraform_var_file"
 
-  format_ips_for_tfvars "control_node_ips" "$CONTROL_NODE_IPS" "14" >>"$terraform_var_file"
-  format_ips_for_tfvars "control_node_prox_target_node" "$CONTROL_NODE_PROX_TARGET_NODE" "1" >>"$terraform_var_file"
+  format_prox_values "control_node_ips" "$CONTROL_NODE_IPS" "CONTROL_NODE_TYPES" "14" >>"$terraform_var_file"
+  format_prox_values "control_node_prox_target_node" "$CONTROL_NODE_PROX_TARGET_NODE" "CONTROL_NODE_TYPES" "1" >>"$terraform_var_file"
   IFS=',' read -ra CONTROL_NODE_IPS <<<"$CONTROL_NODE_IPS"
   echo "" >>"$terraform_var_file"
 
   # [[ -n "${WORKER_NODE_NAME:-}" ]] && echo "worker_node_name             = \"${WORKER_NODE_NAME}\"" >>"$terraform_var_file"
   format_worker_node_names "worker_node_names" "12" >>"$terraform_var_file"
-  [[ -n "${WORKER_NODE_CORES:-}" ]] && echo "worker_node_cores            = ${WORKER_NODE_CORES}" >>"$terraform_var_file"
-  [[ -n "${WORKER_NODE_DISK_SIZE:-}" ]] && echo "worker_node_disk_size        = ${WORKER_NODE_DISK_SIZE}" >>"$terraform_var_file"
-  [[ -n "${WORKER_NODE_RAM_SIZE:-}" ]] && echo "worker_node_ram_size         = ${WORKER_NODE_RAM_SIZE}" >>"$terraform_var_file"
-  format_ips_for_tfvars "worker_node_ips" "$WORKER_NODE_IPS" "14" >>"$terraform_var_file"
-  format_ips_for_tfvars "worker_node_prox_target_node" "$WORKER_NODE_PROX_TARGET_NODE" "1" >>"$terraform_var_file"
+  echo "worker_node_cores            = [${WORKER_PROX_CORES}]" >>"$terraform_var_file"
+  echo "worker_node_disk_size        = [${WORKER_PROX_DISK}]" >>"$terraform_var_file"
+  echo "worker_node_ram_size         = [${WORKER_PROX_RAM}]" >>"$terraform_var_file"
+  format_prox_values "worker_node_ips" "$WORKER_NODE_IPS" "WORKER_NODE_TYPES" "14" >>"$terraform_var_file"
+  format_prox_values "worker_node_prox_target_node" "$WORKER_NODE_PROX_TARGET_NODE" "WORKER_NODE_TYPES" "1" >>"$terraform_var_file"
   IFS=',' read -ra WORKER_NODE_IPS <<<"$WORKER_NODE_IPS"
 
   echo "" >>"$terraform_var_file"
