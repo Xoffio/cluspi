@@ -1,6 +1,7 @@
 - name: Setup Load Balancer for Control Nodes
   hosts: control_load_balancer
   become: true
+  serial: 1
   roles:
     - role: control_lb
 
@@ -13,12 +14,14 @@
 - name: Setup K3s Control Nodes
   hosts: control_nodes
   become: true
+  serial: 1
   roles:
     - role: control_node
 
 - name: Setup K3s Worker Nodes
   hosts: worker_nodes
   become: true
+  serial: 1
   roles:
     - role: worker_node
 
@@ -47,3 +50,4 @@
   connection: local
   roles:
     - role: rancher
+      when: install_rancher | bool

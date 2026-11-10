@@ -3,18 +3,21 @@
     path: /tmp/metallb-kustomization
     state: directory
     mode: '0755'
+  check_mode: false
 
 - name: Copy kustomization.yaml
   ansible.builtin.template:
     src: kustomization.yaml.j2
     dest: /tmp/metallb-kustomization/kustomization.yaml
     mode: '0644'
+  check_mode: false
 
 - name: Copy metallb-conf.yaml
   ansible.builtin.template:
     src: metallb-conf.yaml.j2
     dest: /tmp/metallb-kustomization/metallb-conf.yaml
     mode: '0644'
+  check_mode: false
 
 - name: Check if MetalLB controller deployment exists
   ansible.builtin.command: >
