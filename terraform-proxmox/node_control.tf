@@ -10,10 +10,10 @@ resource "proxmox_vm_qemu" "k3s_control_nodes" {
   os_type     = "cloud-init" # Enable Cloud-Init support
   onboot      = true
 
-  memory = var.control_node_ram_size
+  memory = var.control_node_ram_size[count.index]
 
   cpu {
-    cores = var.control_node_cores
+    cores = var.control_node_cores[count.index]
     type  = "host"
   }
 
@@ -30,7 +30,7 @@ resource "proxmox_vm_qemu" "k3s_control_nodes" {
       scsi0 {
         disk {
           storage = var.storage_name           # Main boot disk also on 'local' storage
-          size    = var.control_node_disk_size # Disk size in GB
+          size    = var.control_node_disk_size[count.index] # Disk size in GB
         }
       }
     }

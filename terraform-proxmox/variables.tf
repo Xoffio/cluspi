@@ -37,21 +37,18 @@ variable "control_node_names" {
 }
 
 variable "control_node_cores" {
-  description = "Number of cores for the CPU (Control node)"
-  type        = number
-  default     = 2
+  description = "CPU cores for each PROX control node, in the same order as control_node_names"
+  type        = list(number)
 }
 
 variable "control_node_disk_size" {
-  description = "Size of the disk in GB (Control node)"
-  type        = number
-  default     = 32
+  description = "Disk size in GB for each PROX control node, in the same order as control_node_names"
+  type        = list(number)
 }
 
 variable "control_node_ram_size" {
-  description = "Size of RAM in MB (Control node)"
-  type        = number
-  default     = 2048
+  description = "RAM in MB for each PROX control node, in the same order as control_node_names"
+  type        = list(number)
 }
 
 variable "control_node_ips" {
@@ -73,21 +70,18 @@ variable "worker_node_names" {
 }
 
 variable "worker_node_cores" {
-  description = "Number of cores for the CPU (Worker node)"
-  type        = number
-  default     = 1
+  description = "CPU cores for each PROX worker node, in the same order as worker_node_names"
+  type        = list(number)
 }
 
 variable "worker_node_disk_size" {
-  description = "Size of the disk in GB (worker node)"
-  type        = number
-  default     = 32
+  description = "Disk size in GB for each PROX worker node, in the same order as worker_node_names"
+  type        = list(number)
 }
 
 variable "worker_node_ram_size" {
-  description = "Size of RAM in MB (worker node)"
-  type        = number
-  default     = 1024
+  description = "RAM in MB for each PROX worker node, in the same order as worker_node_names"
+  type        = list(number)
 }
 
 variable "worker_node_prox_target_node" {
