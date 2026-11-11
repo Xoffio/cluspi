@@ -65,9 +65,9 @@ load_balancers:
       target: prox01
 
 k3s:
-  version: 1.32.9+k3s1
-  datastore: EDB       # Documentation only; the deploy flag -d sets the real value
-  vip: 192.168.1.147   # Control-plane VIP served by the load balancers
+  version: "1.34.8+k3s1"
+  datastore: "EDB"
+  vip: "192.168.1.147" # Control-plane VIP served by the load balancers
 
 database:              # Only used with EDB
   host: db.lan
@@ -80,10 +80,10 @@ metallb:
   ip_range: 192.168.1.150-192.168.1.155
 
 addons:
-  helm_version: 3.18.3
-  cert_manager_version: 1.19.0
+  helm_version: "3.18.3"   # Helm 3. Helm 4 breaks the kubernetes.core.helm module.
+  cert_manager_version: "1.19.0"
   rancher:
-    install: false     # Currently not read by the roles; see TODO.md
-    version: 2.12.2
+    install: true
+    version: "2.15.1"    # Must match the running release, or a re-run downgrades Rancher.
     replicas: 1
     fqdn: cluspi.lan
