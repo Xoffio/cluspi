@@ -10,5 +10,6 @@ Open issues and planned work are tracked in [TODO.md](../TODO.md). These are the
 - **Load balancers are always created by Terraform.** There's no option to use existing VMs, so a plan can try to create `cn-lb01` and `cn-lb02` again if their state is lost.
 - **`EXT` nodes are never created by Terraform.** Prepare them by hand first.
 - **Template name must match.** `proxmox.template` must match a template that exists in Proxmox. The Packer template's `vm_name` is `ubuntu-server-2404`, but `cluster.yaml.example` uses `ubuntu-cloud-2404`.
+- **Helm 4 breaks the Rancher role.** `kubernetes.core.helm` passes `--all` to `helm list`, which Helm 4 rejects. The role needs Helm 3 on the PATH. `dev_machine` only installs Helm when none is found, so an existing Helm 4 binary stays.
 - **The `kubectl` version is pinned** to `v1.34.1` in `roles/dev_machine/tasks/main.yml`. Update it there when you move to a newer cluster.
 - **Terraform state is local.** `terraform-proxmox/terraform.tfstate` is gitignored and lives on the machine that runs `cluspi.sh`. If it's lost, Terraform can't tell which `PROX` VMs already exist.

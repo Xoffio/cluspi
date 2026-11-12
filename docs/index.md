@@ -13,7 +13,7 @@ Start with the [README](../README.md) for a quick install and upgrade.
 
 - [k3s](upgrade/k3s.md)
 - [Add-ons: MetalLB, cert-manager, Helm](upgrade/add-ons.md)
-- [Rancher](upgrade/rancher.md), with the step-by-step progress log in [rancher-upgrade-progress.md](rancher-upgrade-progress.md)
+- [Rancher](upgrade/rancher.md), with the step-by-step progress log in [rancher-upgrades.md](rancher-upgrades.md)
 
 ## Operations
 
